@@ -1,0 +1,29 @@
+node_modules/
+dist/
+
+# Environment files — never commit real values
+.env
+.env.*
+!.env.example
+!.env.production.example
+
+# Key material — NEVER
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Uploads
+server/uploads/*
+!server/uploads/.gitkeep
+
+# Misc
+*.log
+client/dist/
+.vite/
+__pycache__/
+*.pyc
+.venv/
+test-files/
+.DS_Store
+Thumbs.db

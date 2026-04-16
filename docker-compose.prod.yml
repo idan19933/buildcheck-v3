@@ -1,0 +1,50 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: buildcheck-v3-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-buildcheck}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-buildcheck}
+      POSTGRES_DB: ${POSTGRES_DB:-buildcheck_v2}
+    volumes:
+      - buildcheck-v3-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-buildcheck} -d ${POSTGRES_DB:-buildcheck_v2}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: buildcheck-v3-server
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-buildcheck}:${POSTGRES_PASSWORD:-buildcheck}@postgres:5432/${POSTGRES_DB:-buildcheck_v2}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      JWT_SECRET: ${JWT_SECRET}
+      NODE_ENV: production
+      PORT: 3001
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+    volumes:
+      - buildcheck-v3-uploads:/app/uploads
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: buildcheck-v3-client
+    restart: unless-stopped
+    depends_on:
+      - server
+    ports:
+      - "${HTTP_PORT:-8080}:80"
+
+volumes:
+  buildcheck-v3-pgdata:
+  buildcheck-v3-uploads:

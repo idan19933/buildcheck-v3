@@ -1,0 +1,10 @@
+node_modules
+dist
+.env
+.env.*
+uploads/*
+!uploads/.gitkeep
+*.log
+__pycache__
+*.pyc
+.venv

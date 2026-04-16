@@ -1,0 +1,222 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== MULTI-TENANT ====================
+
+model Company {
+  id        String    @id @default(uuid())
+  name      String
+  slug      String    @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  users     User[]
+  projects  Project[]
+}
+
+model User {
+  id        String     @id @default(uuid())
+  email     String     @unique
+  password  String
+  name      String
+  role      UserRole   @default(MEMBER)
+  companyId String
+  company   Company    @relation(fields: [companyId], references: [id])
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  projects  Project[]
+  analyses  Analysis[]
+
+  @@index([companyId])
+}
+
+enum UserRole {
+  ADMIN
+  MEMBER
+}
+
+// ==================== PROJECTS ====================
+
+model Project {
+  id             String          @id @default(uuid())
+  name           String
+  description    String?
+  locality       String?
+  status         ProjectStatus   @default(DRAFT)
+  companyId      String
+  company        Company         @relation(fields: [companyId], references: [id])
+  createdById    String
+  createdBy      User            @relation(fields: [createdById], references: [id])
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  dxfFile        DxfFile?
+  tavaFile       TavaFile?
+  addonDocuments AddonDocument[]
+  analyses       Analysis[]
+
+  @@index([companyId])
+  @@index([createdById])
+}
+
+enum ProjectStatus {
+  DRAFT
+  READY
+  ANALYZING
+  COMPLETED
+}
+
+// ==================== CORE FILES ====================
+
+model DxfFile {
+  id            String   @id @default(uuid())
+  projectId     String   @unique
+  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  originalName  String
+  storedPath    String
+  fileSize      Int
+
+  viewportMap    Json?
+  extractedData  Json?
+  fingerprint    Json?
+  renderedImages Json?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model TavaFile {
+  id               String   @id @default(uuid())
+  projectId        String   @unique
+  project          Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  originalName     String
+  storedPath       String
+  fileSize         Int
+
+  extractedText    String?
+  extractionMethod String?
+  requirements     Json?
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+// ==================== ADD-ON DOCUMENTS ====================
+
+model AddonDocument {
+  id            String      @id @default(uuid())
+  projectId     String
+  project       Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  domain        AddonDomain
+  originalName  String
+  storedPath    String
+  fileSize      Int
+  extractedText String?
+
+  createdAt     DateTime    @default(now())
+
+  addonRuns     AddonRun[]
+
+  @@index([projectId, domain])
+}
+
+enum AddonDomain {
+  FIRE
+  WATER
+  ELECTRICITY
+  ACCESSIBILITY
+}
+
+// ==================== ANALYSES ====================
+
+model Analysis {
+  id               String         @id @default(uuid())
+  projectId        String
+  project          Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  triggeredBy      String
+  user             User           @relation(fields: [triggeredBy], references: [id])
+  status           AnalysisStatus @default(PENDING)
+
+  overallScore     Int?
+  passCount        Int?
+  failCount        Int?
+  warningCount     Int?
+  cannotCheckCount Int?
+  coreResults      Json?
+  summary          String?
+
+  addonRuns        AddonRun[]
+
+  errorMessage     String?
+  startedAt        DateTime?
+  completedAt      DateTime?
+  createdAt        DateTime       @default(now())
+
+  chatMessages     ChatMessage[]
+
+  @@index([projectId])
+}
+
+enum AnalysisStatus {
+  PENDING
+  EXTRACTING_DXF
+  EXTRACTING_TAVA
+  ANALYZING
+  COMPLETED
+  FAILED
+}
+
+// ==================== ADD-ON AGENT RUNS ====================
+
+model AddonRun {
+  id               String         @id @default(uuid())
+  analysisId       String
+  analysis         Analysis       @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  domain           AddonDomain
+  status           AddonRunStatus @default(PENDING)
+
+  documentId       String?
+  document         AddonDocument? @relation(fields: [documentId], references: [id])
+
+  score            Int?
+  passCount        Int?
+  failCount        Int?
+  warningCount     Int?
+  cannotCheckCount Int?
+  results          Json?
+  summary          String?
+  errorMessage     String?
+
+  startedAt        DateTime?
+  completedAt      DateTime?
+  createdAt        DateTime       @default(now())
+
+  @@unique([analysisId, domain])
+  @@index([analysisId])
+}
+
+enum AddonRunStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+// ==================== Q&A CHAT ====================
+
+model ChatMessage {
+  id         String   @id @default(uuid())
+  analysisId String
+  analysis   Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  role       String
+  content    String
+  createdAt  DateTime @default(now())
+
+  @@index([analysisId])
+}

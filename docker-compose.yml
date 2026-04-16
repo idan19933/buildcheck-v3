@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: buildcheck-v3-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: buildcheck
+      POSTGRES_PASSWORD: buildcheck
+      POSTGRES_DB: buildcheck_v2
+    ports:
+      - "5432:5432"
+    volumes:
+      - buildcheck-v3-pgdata:/var/lib/postgresql/data
+
+volumes:
+  buildcheck-v3-pgdata:
