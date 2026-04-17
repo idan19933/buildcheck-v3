@@ -152,7 +152,7 @@ def extract_viewport_geometry(block) -> dict:
         "entity_counts": dict(entity_counts),
         "total_entities": sum(entity_counts.values()),
         "line_count": len(lines),
-        "polyline_count": entity_counts.get("POLYLINE", 0) + entity_counts.get("LWPOLYLINE", 0),
+        "polyline_count": entity_counts.get("POLYLINE", 0) + entity_counts.get("LWPOLYLINE", 0) + entity_counts.get("POLYLINE2D", 0),
         "insert_count": len(inserts),
         "circle_count": circles,
         "arc_count": arcs,
@@ -209,9 +209,23 @@ DEVELOPMENT_KEYWORDS = ["פיתוח", "העמדה", "תוכנית פיתוח", "
 DIRECTIONS = ["צפונית", "דרומית", "מזרחית", "מערבית"]
 
 
+def _augment_with_reversed_hebrew(texts: list[str]) -> list[str]:
+    """Add reversed versions of Hebrew strings to handle visual-order R12 DXFs."""
+    augmented = list(texts)
+    for t in texts:
+        if any("\u0590" <= c <= "\u05FF" for c in t):
+            rev = t[::-1]
+            if rev != t:
+                augmented.append(rev)
+    return augmented
+
+
 def classify_viewport(vp_name: str, texts: list, geometry: dict, parsed: dict) -> dict:
     label_texts = [l["text"] for l in parsed["labels"]]
     all_texts = [t["text"] for t in texts]
+    # Handle visual-order Hebrew (reversed) in legacy DXF R12 files
+    label_texts = _augment_with_reversed_hebrew(label_texts)
+    all_texts = _augment_with_reversed_hebrew(all_texts)
     has_heights = bool(parsed["heights"])
     has_dimensions = bool(parsed["dimensions"])
     has_scales = bool(parsed["scales"])
@@ -221,10 +235,11 @@ def classify_viewport(vp_name: str, texts: list, geometry: dict, parsed: dict) -
     def default_scale(fallback: str) -> str:
         return parsed["scales"][0] if parsed["scales"] else fallback
 
-    # Index page
+    # Index page — many sheet-name keywords together indicate the table of contents
     index_matches = sum(1 for kw in INDEX_KEYWORDS if any(kw in t for t in all_texts))
-    if index_matches >= 4 and has_scales:
-        return {"type": "index_page", "confidence": 0.95, "label": "תיק מידע", "scale": None}
+    if index_matches >= 4:
+        conf = 0.95 if has_scales else 0.85
+        return {"type": "index_page", "confidence": conf, "label": "תיק מידע", "scale": None}
 
     # Floor plan
     room_matches = sum(1 for kw in ROOM_KEYWORDS if any(kw in t for t in label_texts))
@@ -286,6 +301,130 @@ def classify_viewport(vp_name: str, texts: list, geometry: dict, parsed: dict) -
     return {"type": "unclassified", "confidence": 0.0, "label": vp_name, "scale": None}
 
 
+# ------------------------------------------------------------------ encoding
+
+def _has_hebrew_in_viewports(doc) -> bool:
+    """Quick check: do any viewport TEXT entities contain Hebrew chars?"""
+    checked = 0
+    for block in doc.blocks:
+        if not block.name.startswith("VIEWPORT") or block.name.startswith("VIEWPORT_"):
+            continue
+        for e in block:
+            if checked > 200:
+                return False
+            if e.dxftype() in ("TEXT", "MTEXT"):
+                try:
+                    raw = e.dxf.text if e.dxftype() == "TEXT" else getattr(e, "text", e.dxf.text)
+                    decoded = decode_unicode_escapes(raw)
+                    if any("\u0590" <= c <= "\u05FF" for c in decoded):
+                        return True
+                except Exception:
+                    pass
+                checked += 1
+    return False
+
+
+def _load_dxf_with_hebrew_fallback(dxf_path: str):
+    """
+    Load DXF, trying Hebrew encodings if the default doesn't produce Hebrew text.
+    Israeli permit DXFs often have $DWGCODEPAGE=ANSI_1252 but contain Hebrew text
+    encoded as cp862 (DOS) or cp1255 (Windows). Without the right encoding, the
+    viewport classifier can't match Hebrew keywords and most viewports stay unclassified.
+    """
+    doc = ezdxf.readfile(dxf_path)
+    if _has_hebrew_in_viewports(doc):
+        return doc
+
+    import sys as _sys
+    for enc in ("cp1255", "cp862"):
+        try:
+            doc2 = ezdxf.readfile(dxf_path, encoding=enc)
+            if _has_hebrew_in_viewports(doc2):
+                print(f"[encoding] re-read with {enc} — Hebrew detected", file=_sys.stderr)
+                return doc2
+        except Exception:
+            continue
+    return doc
+
+
+# ------------------------------------------------------------------ area computation
+
+def compute_closed_polyline_areas(block, scale_str: str | None) -> list:
+    """
+    Compute area (Shoelace formula) for every closed LWPOLYLINE in the block.
+    Returns list of { area_raw, area_m2_approx, vertex_count, center, layer }.
+
+    Unit heuristic: in Israeli permit DXFs at scale 1:100, DXF units are typically cm.
+    At 1:50, units may also be cm. At 1:250, units are often m.
+    We report raw area + an approximate m² conversion using the scale.
+    """
+    scale_divisor = 1.0
+    if scale_str:
+        m = re.match(r"1\s*:\s*(\d+)", scale_str.replace(" ", ""))
+        if m:
+            s = int(m.group(1))
+            if s <= 100:
+                scale_divisor = 10000.0  # DXF units = cm → cm² → m²
+            elif s <= 250:
+                scale_divisor = 1.0      # DXF units = m → m²
+            else:
+                scale_divisor = 1.0
+
+    areas = []
+    for e in block:
+        etype = e.dxftype()
+        pts = []
+        is_closed = False
+
+        if etype == "LWPOLYLINE":
+            if not e.closed:
+                continue
+            pts = list(e.get_points(format="xy"))
+            is_closed = True
+        elif etype == "POLYLINE":
+            # DXF R12 uses POLYLINE with VERTEX sub-entities
+            try:
+                is_closed = e.is_closed
+                if not is_closed:
+                    continue
+                pts = [(v.dxf.location[0], v.dxf.location[1]) for v in e.vertices]
+            except Exception:
+                continue
+        else:
+            continue
+        if len(pts) < 3:
+            continue
+
+        # Shoelace formula
+        n = len(pts)
+        area = 0.0
+        for i in range(n):
+            j = (i + 1) % n
+            area += pts[i][0] * pts[j][1]
+            area -= pts[j][0] * pts[i][1]
+        area = abs(area) / 2.0
+
+        if area < 0.1:
+            continue
+
+        cx = sum(p[0] for p in pts) / n
+        cy = sum(p[1] for p in pts) / n
+
+        area_m2 = round(area / scale_divisor, 2) if scale_divisor > 0 else None
+
+        areas.append({
+            "area_raw": round(area, 2),
+            "area_m2_approx": area_m2,
+            "vertex_count": n,
+            "center": [round(cx, 2), round(cy, 2)],
+            "layer": e.dxf.layer,
+        })
+
+    # Sort largest first — most interesting polygons are typically the biggest
+    areas.sort(key=lambda a: a["area_raw"], reverse=True)
+    return areas[:50]  # Cap to avoid sending huge arrays
+
+
 # ------------------------------------------------------------------ main
 
 def main():
@@ -296,7 +435,7 @@ def main():
     dxf_path = sys.argv[1]
 
     try:
-        doc = ezdxf.readfile(dxf_path)
+        doc = _load_dxf_with_hebrew_fallback(dxf_path)
     except Exception as e:
         print(json.dumps({"error": f"Failed to read DXF: {e}"}))
         sys.exit(1)
@@ -335,6 +474,12 @@ def main():
         geometry = extract_viewport_geometry(block)
         parsed = extract_dimensions_from_texts(texts)
         classification = classify_viewport(vp_name, texts, geometry, parsed)
+
+        # Compute closed-polyline areas for plan-type viewports
+        closed_areas = []
+        if classification["type"] in ("floor_plan", "roof_plan", "site_plan", "survey", "area_calculation", "unclassified"):
+            closed_areas = compute_closed_polyline_areas(block, classification.get("scale"))
+        parsed["closed_areas"] = closed_areas
 
         result["viewports"][vp_name] = {
             "texts": texts,
