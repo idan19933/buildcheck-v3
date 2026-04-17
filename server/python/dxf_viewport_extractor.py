@@ -425,6 +425,306 @@ def compute_closed_polyline_areas(block, scale_str: str | None) -> list:
     return areas[:50]  # Cap to avoid sending huge arrays
 
 
+# ------------------------------------------------------------------ spatial correlation engine
+
+
+def extract_setbacks(texts: list) -> list:
+    """Find setback distances between קו בניין and גבול מגרש label pairs in elevation viewports."""
+    kav_binyan = [t for t in texts if "קו בניין" in t["text"]]
+    gvul_migrash = [t for t in texts if "גבול מגרש" in t["text"]]
+
+    pairs = []
+    used_gvul = set()
+    for kb in kav_binyan:
+        best_match = None
+        best_dist = 999.0
+        for i, gm in enumerate(gvul_migrash):
+            if i in used_gvul:
+                continue
+            y_diff = abs(kb["y"] - gm["y"])
+            if y_diff < 15 and y_diff < best_dist:
+                best_dist = y_diff
+                best_match = (i, gm)
+        if best_match:
+            used_gvul.add(best_match[0])
+            pairs.append((kb, best_match[1]))
+
+    integers = [
+        t for t in texts
+        if re.match(r"^\d+$", t["text"].strip()) and 50 <= int(t["text"].strip()) <= 1500
+    ]
+
+    results = []
+    for kb, gm in pairs:
+        min_x = min(kb["x"], gm["x"])
+        max_x = max(kb["x"], gm["x"])
+        label_y = max(kb["y"], gm["y"])
+
+        best_num = None
+        best_score = 999.0
+        for num in integers:
+            y_below = label_y - num["y"]
+            x_between = min_x - 30 <= num["x"] <= max_x + 30
+            if 0 < y_below < 40 and x_between:
+                score = y_below + abs(num["x"] - (min_x + max_x) / 2) * 0.5
+                if score < best_score:
+                    best_score = score
+                    best_num = num
+
+        if best_num:
+            val = int(best_num["text"].strip())
+            side = "left" if gm["x"] < kb["x"] else "right"
+            results.append({
+                "type": "setback",
+                "boundary_label_pos": {"x": gm["x"], "y": gm["y"]},
+                "building_line_pos": {"x": kb["x"], "y": kb["y"]},
+                "distance_cm": val,
+                "distance_m": round(val / 100, 2),
+                "side": side,
+            })
+
+    return results
+
+
+def extract_dimension_chains(texts: list) -> list:
+    """Group integer dimension texts by X coordinate to find dimension chains."""
+    from collections import defaultdict as _dd
+
+    integers = []
+    for t in texts:
+        text = t["text"].strip()
+        if re.match(r"^\d+$", text):
+            val = int(text)
+            if 10 <= val <= 2000:
+                integers.append({"x": round(t["x"]), "y": t["y"], "val": val})
+
+    x_groups: dict[int, list] = {}
+    for item in integers:
+        x_groups.setdefault(item["x"], []).append(item)
+
+    chains = []
+    for x, items in x_groups.items():
+        if len(items) < 2:
+            continue
+        items.sort(key=lambda i: -i["y"])
+        values = [i["val"] for i in items]
+        total = sum(values)
+        chains.append({
+            "type": "dimension_chain",
+            "x_position": x,
+            "values_cm": values,
+            "total_cm": total,
+            "total_m": round(total / 100, 2),
+            "direction": "vertical",
+            "count": len(values),
+        })
+
+    chains.sort(key=lambda c: -c["total_cm"])
+    return chains[:20]
+
+
+def correlate_labels_to_values(texts: list) -> list:
+    """For significant Hebrew labels, find the closest numeric values."""
+    LABELS_OF_INTEREST = [
+        "מעקה בנוי", "מעקה קל", "מעקה",
+        "חנייה מקורה", "חניייה מקורה", "חנייה",
+        "גגון מבטון", "גגון",
+        "ממד",
+        "מרפסת לא מקורה", "מרפסת",
+        "פרגולה קלה", "פרגולה",
+        "חומה קיימת", "חומה",
+        "רחוב",
+    ]
+
+    results = []
+    for t in texts:
+        text = t["text"].strip()
+        if text not in LABELS_OF_INTEREST:
+            continue
+
+        nearby = []
+        for other in texts:
+            if other is t:
+                continue
+            other_text = other["text"].strip()
+            dist = ((t["x"] - other["x"]) ** 2 + (t["y"] - other["y"]) ** 2) ** 0.5
+            if dist > 50:
+                continue
+
+            value_type = None
+            if re.match(r"^[+\-]\d+\.?\d*$", other_text):
+                value_type = "height"
+            elif re.match(r"^\d+$", other_text) and 10 <= int(other_text) <= 2000:
+                value_type = "dimension_cm"
+            elif re.match(r"^\d+\.?\d*%$", other_text):
+                value_type = "percentage"
+            elif re.match(r"^\d+\.\d+$", other_text):
+                value_type = "decimal"
+
+            if value_type:
+                nearby.append({
+                    "value": other_text,
+                    "type": value_type,
+                    "distance": round(dist, 1),
+                    "pos": {"x": other["x"], "y": other["y"]},
+                })
+
+        if nearby:
+            nearby.sort(key=lambda n: n["distance"])
+            results.append({
+                "label": text,
+                "label_pos": {"x": t["x"], "y": t["y"]},
+                "nearby_values": nearby[:5],
+            })
+
+    return results
+
+
+def extract_survey_data(texts: list) -> dict:
+    """Separate survey viewport data into terrain elevations, edge lengths, and curve radii."""
+    elevations = []
+    edge_lengths = []
+    curve_radii = []
+    point_numbers = []
+
+    for t in texts:
+        text = t["text"].strip()
+
+        r_match = re.match(r"^R\s*=\s*(\d+\.?\d*)$", text)
+        if r_match:
+            curve_radii.append({"value": float(r_match.group(1)), "x": t["x"], "y": t["y"]})
+            continue
+
+        if re.match(r"^\d+\.\d+$", text):
+            val = float(text)
+            if val > 600:
+                elevations.append({"value": val, "x": t["x"], "y": t["y"]})
+            elif 0.5 < val < 50:
+                edge_lengths.append({"value": val, "x": t["x"], "y": t["y"], "unit": "m"})
+            continue
+
+        if re.match(r"^\d+$", text):
+            val = int(text)
+            if 1 <= val <= 30:
+                point_numbers.append(val)
+
+    elev_vals = [e["value"] for e in elevations]
+    return {
+        "terrain_elevations": elevations,
+        "boundary_edge_lengths": edge_lengths,
+        "curve_radii": curve_radii,
+        "estimated_perimeter_m": round(sum(e["value"] for e in edge_lengths), 2),
+        "point_numbers": sorted(set(point_numbers)),
+        "elevation_range": {
+            "min": round(min(elev_vals), 2),
+            "max": round(max(elev_vals), 2),
+            "diff": round(max(elev_vals) - min(elev_vals), 2),
+        } if elev_vals else None,
+    }
+
+
+def extract_parking_data(texts: list) -> dict:
+    """Extract parking-specific measurements."""
+    is_covered = any("מקורה" in t["text"] for t in texts)
+    slopes = []
+    heights = []
+    dimensions = []
+
+    for t in texts:
+        text = t["text"].strip()
+        if re.match(r"^\d+\.?\d*%$", text):
+            slopes.append(text)
+        elif re.match(r"^[+\-]\d+\.?\d*$", text):
+            heights.append(text)
+        elif re.match(r"^\d+$", text):
+            val = int(text)
+            if 20 <= val <= 2000:
+                dimensions.append(val)
+
+    bay = None
+    widths = [d for d in dimensions if 200 <= d <= 350]
+    depths = [d for d in dimensions if 450 <= d <= 700]
+    if widths and depths:
+        bay = {"width_m": round(widths[0] / 100, 2), "depth_m": round(depths[0] / 100, 2)}
+
+    total_width = None
+    large_dims = [d for d in dimensions if d > 400]
+    if large_dims:
+        total_width = round(max(large_dims) / 100, 2)
+
+    return {
+        "is_covered": is_covered,
+        "slopes": slopes,
+        "heights": heights,
+        "dimensions_cm": dimensions,
+        "bay_dimensions": bay,
+        "total_width_m": total_width,
+    }
+
+
+def analyze_heights(texts: list) -> dict:
+    """Classify height values into architectural categories."""
+    relative = []
+    absolute = []
+
+    for t in texts:
+        text = t["text"].strip()
+        match = re.match(r"^([+\-])(\d+\.?\d*)$", text)
+        if not match:
+            continue
+        val = float(match.group(2))
+        if match.group(1) == "-":
+            val = -val
+
+        if abs(val) < 100:
+            relative.append({"value": val, "x": t["x"], "y": t["y"]})
+        elif val > 600:
+            absolute.append({"value": val, "x": t["x"], "y": t["y"]})
+
+    rel_values = sorted(set(r["value"] for r in relative))
+    abs_values = sorted(set(a["value"] for a in absolute))
+
+    result: dict = {
+        "all_relative": rel_values,
+        "all_absolute": abs_values,
+        "ground_level": 0.0 if 0.0 in rel_values else None,
+    }
+
+    zero_entries = [r for r in relative if r["value"] == 0.0]
+    if zero_entries and absolute:
+        z = zero_entries[0]
+        closest_abs = min(absolute, key=lambda a: ((a["x"] - z["x"]) ** 2 + (a["y"] - z["y"]) ** 2) ** 0.5)
+        result["absolute_ground"] = closest_abs["value"]
+
+    floors = []
+    if 0.0 in rel_values:
+        floors.append({"label": "ground_floor_slab", "relative": 0.0})
+    for v in rel_values:
+        if 2.5 <= v <= 3.5:
+            floors.append({"label": "first_floor_slab", "relative": v})
+        elif 5.5 <= v <= 6.5:
+            floors.append({"label": "roof_slab", "relative": v})
+    result["floor_heights"] = floors
+
+    if rel_values:
+        result["max_height"] = max(rel_values)
+
+    roof_candidates = [v for v in rel_values if 5.5 <= v <= 6.5]
+    if roof_candidates:
+        result["roof_height"] = roof_candidates[0]
+
+    if "roof_height" in result and "max_height" in result:
+        diff = round(result["max_height"] - result["roof_height"], 2)
+        if 0.3 <= diff <= 1.5:
+            result["parapet_height"] = diff
+
+    plinth_candidates = [v for v in rel_values if 1.0 <= v <= 2.0]
+    if plinth_candidates:
+        result["plinth_height"] = plinth_candidates[0]
+
+    return result
+
+
 # ------------------------------------------------------------------ main
 
 def main():
@@ -481,11 +781,31 @@ def main():
             closed_areas = compute_closed_polyline_areas(block, classification.get("scale"))
         parsed["closed_areas"] = closed_areas
 
+        # Spatial correlation based on viewport type
+        spatial_data: dict = {}
+        vp_type = classification["type"]
+
+        if vp_type in ("elevation", "cross_section"):
+            spatial_data["setbacks"] = extract_setbacks(texts)
+            spatial_data["height_analysis"] = analyze_heights(texts)
+            spatial_data["label_correlations"] = correlate_labels_to_values(texts)
+        elif vp_type in ("floor_plan", "roof_plan", "site_plan"):
+            spatial_data["dimension_chains"] = extract_dimension_chains(texts)
+            spatial_data["label_correlations"] = correlate_labels_to_values(texts)
+        elif vp_type == "survey":
+            spatial_data["survey"] = extract_survey_data(texts)
+        elif vp_type == "parking_section":
+            spatial_data["parking"] = extract_parking_data(texts)
+            spatial_data["height_analysis"] = analyze_heights(texts)
+        elif vp_type == "area_calculation":
+            spatial_data["label_correlations"] = correlate_labels_to_values(texts)
+
         result["viewports"][vp_name] = {
             "texts": texts,
             "geometry": geometry,
             "parsed_data": parsed,
             "classification": classification,
+            "spatial_data": spatial_data,
         }
         result["viewport_classifications"][vp_name] = classification
 
@@ -498,6 +818,51 @@ def main():
         c["type"] for c in result["viewport_classifications"].values()
         if c["type"] != "unclassified"
     })
+
+    # ---- Aggregate compliance_data from all viewports ----
+    all_setbacks = []
+    building_envelope = {}
+    survey_summary = None
+    parking_summary = None
+    best_height_analysis = None
+    best_height_count = 0
+
+    for vp_name, vp_data in result["viewports"].items():
+        sd = vp_data.get("spatial_data", {})
+
+        for s in sd.get("setbacks", []):
+            s["source_viewport"] = vp_name
+            all_setbacks.append(s)
+
+        chains = sd.get("dimension_chains", [])
+        if chains:
+            building_envelope[vp_name] = {
+                "max_dimension_m": chains[0]["total_m"],
+                "chain": chains[0]["values_cm"],
+            }
+
+        if "survey" in sd and survey_summary is None:
+            survey_summary = sd["survey"]
+            survey_summary["source_viewport"] = vp_name
+
+        if "parking" in sd and parking_summary is None:
+            parking_summary = sd["parking"]
+            parking_summary["source_viewport"] = vp_name
+
+        ha = sd.get("height_analysis", {})
+        count = len(ha.get("all_relative", []))
+        if count > best_height_count:
+            best_height_count = count
+            best_height_analysis = dict(ha)
+            best_height_analysis["source_viewport"] = vp_name
+
+    result["compliance_data"] = {
+        "setbacks": all_setbacks,
+        "building_envelope": building_envelope,
+        "survey": survey_summary,
+        "parking": parking_summary,
+        "height_analysis": best_height_analysis,
+    }
 
     # Ensure utf-8 on Windows stdout for Hebrew output.
     try:

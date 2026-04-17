@@ -30,6 +30,7 @@ interface DxfSummary {
   survey: string;
   parking: string;
   areaCalculation: string;
+  complianceData: string;
 }
 
 function buildDxfSummary(viewportData: ViewportExtraction): DxfSummary {
@@ -40,6 +41,7 @@ function buildDxfSummary(viewportData: ViewportExtraction): DxfSummary {
     survey: '',
     parking: '',
     areaCalculation: '',
+    complianceData: '',
   };
 
   for (const [vpName, vp] of Object.entries(viewportData.viewports || {})) {
@@ -93,8 +95,31 @@ Geometry: ${geom.total_entities ?? 0} entities, bbox: ${JSON.stringify(geom.boun
   }
 
   for (const key of Object.keys(summary) as Array<keyof DxfSummary>) {
-    if (!summary[key].trim()) summary[key] = 'לא נמצא ב-DXF';
+    if (key !== 'complianceData' && !summary[key].trim()) summary[key] = 'לא נמצא ב-DXF';
   }
+
+  const cd = (viewportData as unknown as Record<string, unknown>).compliance_data as Record<string, unknown> | undefined;
+  if (cd) {
+    summary.complianceData = `
+--- נתונים מעובדים לבדיקה (Spatial Correlation Engine) ---
+
+קווי בניין (setbacks):
+${JSON.stringify(cd.setbacks || [], null, 2)}
+
+מעטפת בניין (dimension chains):
+${JSON.stringify(cd.building_envelope || {}, null, 2)}
+
+נתוני מדידה (survey):
+${JSON.stringify(cd.survey || null, null, 2)}
+
+חנייה (parking):
+${JSON.stringify(cd.parking || null, null, 2)}
+
+ניתוח גבהים (height analysis):
+${JSON.stringify(cd.height_analysis || null, null, 2)}
+`;
+  }
+
   return summary;
 }
 
@@ -138,6 +163,8 @@ ${dxf.parking}
 
 ### חישוב שטחים:
 ${dxf.areaCalculation}
+
+${dxf.complianceData}
 
 ## הוראות:
 1. עבור כל דרישה, החזר סטטוס:
