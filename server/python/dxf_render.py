@@ -73,24 +73,37 @@ def get_entity_lineweight(entity, doc):
     try:
         lw = entity.dxf.lineweight
         if lw is not None and lw > 0:
-            return max(0.3, min(3.0, lw / 40))
+            return max(0.6, min(3.0, lw / 40))
         layer = doc.layers.get(entity.dxf.layer)
         if layer and hasattr(layer.dxf, "lineweight") and layer.dxf.lineweight > 0:
-            return max(0.3, min(3.0, layer.dxf.lineweight / 40))
+            return max(0.6, min(3.0, layer.dxf.lineweight / 40))
     except Exception:
         pass
-    return 0.5
+    return 0.8
 
 
-BG_COLOR = "#1e1e2e"
-TEXT_COLOR = "#CCCCCC"
+BG_COLOR = "#FFFFFF"
+GRID_COLOR = "#E8E8E8"
+TEXT_COLOR = "#222222"
 ASCII_TEXT_RE = re.compile(r"^[\d\.\-\+\s\*/=\(\)a-zA-Z°'\"]+$")
+
+# Colors too bright against white background — remap for visibility.
+_LIGHT_REMAP = {
+    "#FFFFFF": "#333333", "#FFFF00": "#B8860B", "#C0C0C0": "#666666",
+    "#CCCCCC": "#555555", "#B3B3B3": "#555555", "#FF7F7F": "#CC3333",
+    "#FFFF7F": "#999900", "#FFDF7F": "#B8860B", "#FFBF7F": "#CC6600",
+    "#FF9F7F": "#CC4400",
+}
+
+def _visible_color(col: str) -> str:
+    """Remap colors that would be invisible on a white background."""
+    return _LIGHT_REMAP.get(col.upper(), col)
 
 
 def _draw_entity(e, doc, center, radius, ax, segments, seg_colors, seg_widths, is_detail):
     """Draw one entity onto ax / segment list. Returns 1 if drawn, 0 otherwise."""
     try:
-        col = get_entity_color(e, doc)
+        col = _visible_color(get_entity_color(e, doc))
         w = get_entity_lineweight(e, doc)
         et = e.dxftype()
 
@@ -171,7 +184,7 @@ def _draw_entity(e, doc, center, radius, ax, segments, seg_colors, seg_widths, i
                 fs = 4.0 if is_detail else 3.0
                 ax.text(pos[0], pos[1], txt_s, fontsize=fs, color=col,
                         ha="center", va="center", zorder=8,
-                        path_effects=[pe.withStroke(linewidth=1.0, foreground=BG_COLOR)])
+                        path_effects=[pe.withStroke(linewidth=1.2, foreground="#FFFFFF")])
                 return 1
             return 0
 
@@ -283,9 +296,10 @@ def render_source(entities, doc, out_path, figsize, dpi, title, is_detail, cente
     ax.set_aspect("equal")
     ax.set_facecolor(BG_COLOR)
     fig.patch.set_facecolor(BG_COLOR)
-    ax.tick_params(labelsize=5, colors="#666666")
+    ax.tick_params(labelsize=5, colors="#999999")
+    ax.grid(True, color=GRID_COLOR, linewidth=0.3, alpha=0.5)
     for spine in ax.spines.values():
-        spine.set_color("#333333")
+        spine.set_color("#CCCCCC")
     ax.set_title(title, fontsize=9, color=TEXT_COLOR, pad=8)
 
     fig.savefig(out_path, dpi=dpi, bbox_inches="tight", facecolor=BG_COLOR)

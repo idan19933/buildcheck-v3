@@ -33,7 +33,7 @@ export async function callClaude(
   const res = await client.messages.create({
     model: MODEL_IDS[model],
     max_tokens: opts.maxTokens ?? 16000,
-    temperature: opts.temperature ?? 0.2,
+    temperature: opts.temperature ?? 0,
     messages: [{ role: 'user', content: content as never }],
   });
 
