@@ -1,6 +1,7 @@
 import path from 'path';
 import { prisma } from '../lib/prisma';
-import { extractDxfViewports, renderDxf } from './dxf.service';
+import { extractDxfViewports, renderDxfPreviews } from './dxf.service';
+import { processDxf } from './dxf-pipeline.service';
 import { extractPdfText, parseTavaRequirements, TavaRequirement } from './pdf-extract.service';
 import { runCoreComplianceAgent } from './core-compliance-agent';
 import { FireAddonAgent } from './addon-agents/fire-agent';
@@ -26,24 +27,113 @@ export async function runCoreAnalysis(analysisId: string): Promise<void> {
       throw new Error('Missing DXF or תב"ע file');
     }
 
-    const viewportData = await extractDxfViewports(analysis.project.dxfFile.storedPath);
+    // Run the AI-codegen pipeline (Phase 1 explore → Phase 2 generate → Phase 3 extract)
+    // and the legacy static viewport extractor in parallel. The new pipeline owns SVG
+    // rendering + structured compliance_data; the legacy extractor still feeds the
+    // compliance agent's existing viewports[] shape until that agent is migrated.
+    const dxfPath = analysis.project.dxfFile.storedPath;
+    const dxfFileId = analysis.project.dxfFile.id;
+    const renderRoot = path.resolve(__dirname, '../../uploads/renders', dxfFileId);
 
-    // Best-effort: render preview images. Failure here doesn't block analysis.
-    const renderRoot = path.resolve(__dirname, '../../uploads/renders', analysis.project.dxfFile.id);
-    let renderedImages: string[] = [];
-    try {
-      renderedImages = await renderDxf(analysis.project.dxfFile.storedPath, renderRoot);
-      console.log(`[dxf-render] generated ${renderedImages.length} previews for ${analysis.project.dxfFile.id}`);
-    } catch (e) {
-      console.error('[dxf-render] failed:', e);
+    // Fast-path callback: as soon as Phase 1 explore lands, render deterministic
+    // PNG previews (~8 s) and write a partial DB update. The frontend's polling
+    // picks them up and shows thumbnails while Phase 2/3 finish (~90 s more).
+    const onExplorationReady = async (_exp: unknown, explorationJsonPath: string) => {
+      try {
+        const t0 = Date.now();
+        const preview = await renderDxfPreviews(dxfPath, explorationJsonPath, renderRoot);
+        console.log(
+          `[preview:${dxfFileId.slice(0, 8)}] ${preview.preview_count} PNGs in ${Date.now() - t0}ms`,
+        );
+        // Read whatever's already in renderedImages so we don't clobber a
+        // fully-finished AI run that raced us (unlikely — preview is much faster).
+        const existing = await prisma.dxfFile.findUnique({
+          where: { id: dxfFileId },
+          select: { renderedImages: true },
+        });
+        const current = (existing?.renderedImages as Record<string, unknown> | null) ?? {};
+        await prisma.dxfFile.update({
+          where: { id: dxfFileId },
+          data: {
+            renderedImages: {
+              ...current,
+              previews: preview.previews,
+              preview_ready_at: new Date().toISOString(),
+            } as object,
+          },
+        });
+      } catch (e) {
+        console.error(`[preview:${dxfFileId.slice(0, 8)}] failed:`, e);
+      }
+    };
+
+    const [viewportData, pipelineSettled] = await Promise.all([
+      extractDxfViewports(dxfPath),
+      processDxf(dxfPath, renderRoot, {
+        onProgress: (step, detail) =>
+          console.log(`[pipeline:${dxfFileId.slice(0, 8)}] ${step} — ${detail}`),
+        onExplorationReady,
+      }).then(
+        (r) => ({ ok: true as const, value: r }),
+        (e) => ({ ok: false as const, error: e instanceof Error ? e.message : String(e) }),
+      ),
+    ]);
+
+    let renderedSheets: object | undefined;
+    if (pipelineSettled.ok) {
+      const r = pipelineSettled.value;
+      const cd = r.complianceData as Record<string, unknown> | undefined;
+      const aiSheets = (cd?.sheets as Array<Record<string, unknown>> | undefined) ?? [];
+      // Pull in whatever the preview callback already wrote so we don't
+      // overwrite the previews / preview_ready_at fields.
+      const existing = await prisma.dxfFile.findUnique({
+        where: { id: dxfFileId },
+        select: { renderedImages: true },
+      });
+      const previewState = (existing?.renderedImages as Record<string, unknown> | null) ?? {};
+      // Transform the AI pipeline's sheet shape into the RenderedSheets shape the
+      // frontend (DxfPreview / types/index.ts) already consumes.
+      renderedSheets = {
+        previews: previewState.previews ?? [],
+        preview_ready_at: previewState.preview_ready_at ?? null,
+        sheets: aiSheets.map((s) => ({
+          sheet_num: (s.sheet_number as number | undefined) ?? 0,
+          filename: s.svg_file as string,
+          label_he: (s.name as string | undefined) ?? '',
+          label_en: (s.name_en as string | undefined) ?? '',
+          type: (s.type as string | undefined) ?? 'unclassified',
+          icon: '',
+          scale: (s.scale as string | null | undefined) ?? null,
+          geo_viewport: (s.geometry_source as string | null | undefined) ?? null,
+          ann_viewport: (s.annotation_source as string | null | undefined) ?? null,
+          pair_score: 0,
+          entity_count: (s.entity_count as number | undefined) ?? 0,
+          bbox: (s.bbox as [number, number, number, number] | undefined) ?? [0, 0, 0, 0],
+        })),
+        files: aiSheets.map((s) => s.svg_file as string),
+        viewport_count: Object.keys((r.exploration as { blocks?: object }).blocks ?? {}).length,
+        sheet_count: aiSheets.length,
+        ai_pipeline: {
+          used_fallback: r.usedFallback,
+          generated_script: r.generatedScriptPath,
+          rendering_warnings: (cd?.rendering_warnings as string[] | undefined) ?? [],
+          compliance_data: cd?.compliance_data ?? null,
+        },
+      };
+      console.log(
+        `[pipeline:${dxfFileId.slice(0, 8)}] done — ${aiSheets.length} sheets, ` +
+        `fallback=${r.usedFallback}, warnings=${(cd?.rendering_warnings as string[] | undefined)?.length ?? 0}`,
+      );
+    } else {
+      console.error(`[pipeline:${dxfFileId.slice(0, 8)}] failed: ${pipelineSettled.error}`);
     }
 
     await prisma.dxfFile.update({
-      where: { id: analysis.project.dxfFile.id },
+      where: { id: dxfFileId },
       data: {
         viewportMap: viewportData.viewport_classifications as object,
         extractedData: viewportData as unknown as object,
-        renderedImages: renderedImages as unknown as object,
+        ...(renderedSheets ? { renderedImages: renderedSheets } : {}),
       },
     });
 

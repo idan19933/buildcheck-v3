@@ -1,6 +1,9 @@
 node_modules/
 dist/
 
+# Claude Code session-local config (permissions, IDE state)
+.claude/
+
 # Environment files — never commit real values
 .env
 .env.*

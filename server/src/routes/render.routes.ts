@@ -16,7 +16,7 @@ router.get('/:dxfFileId/:filename', async (req, res) => {
   if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
     return res.status(400).end();
   }
-  if (!/\.(png|jpg|jpeg|webp)$/i.test(filename)) return res.status(400).end();
+  if (!/\.(png|jpg|jpeg|webp|svg)$/i.test(filename)) return res.status(400).end();
 
   // Confirm the dxf file actually exists (cheap check; avoids probing disk).
   const exists = await prisma.dxfFile.findUnique({
@@ -29,6 +29,9 @@ router.get('/:dxfFileId/:filename', async (req, res) => {
   if (!fs.existsSync(filePath)) return res.status(404).end();
 
   res.setHeader('Cache-Control', 'public, max-age=86400');
+  if (filename.toLowerCase().endsWith('.svg')) {
+    res.setHeader('Content-Type', 'image/svg+xml; charset=utf-8');
+  }
   res.sendFile(filePath);
 });
 

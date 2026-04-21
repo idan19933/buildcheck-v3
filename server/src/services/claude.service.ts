@@ -12,7 +12,7 @@ const MODEL_IDS = {
 
 export type ClaudeModel = keyof typeof MODEL_IDS;
 
-type ImageBlock = {
+export type ImageBlock = {
   type: 'image';
   source: { type: 'base64'; media_type: 'image/png' | 'image/jpeg'; data: string };
 };

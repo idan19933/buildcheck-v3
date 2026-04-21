@@ -7,6 +7,8 @@ const execFileAsync = promisify(execFile);
 const PYTHON_BIN = process.env.PYTHON_BIN || 'python3';
 const EXTRACTOR = path.resolve(__dirname, '../../python/dxf_viewport_extractor.py');
 const RENDERER = path.resolve(__dirname, '../../python/dxf_render.py');
+const SHEET_RENDERER = path.resolve(__dirname, '../../python/dxf_sheet_renderer.py');
+const PREVIEW_RENDERER = path.resolve(__dirname, '../../python/dxf_preview_renderer.py');
 
 export interface ViewportClassification {
   type: string;
@@ -58,4 +60,80 @@ export async function renderDxf(dxfPath: string, outputDir: string): Promise<str
     console.error('[dxf-render] could not parse renderer output:', e);
     return [];
   }
+}
+
+export interface SheetRender {
+  sheet_num: number;
+  filename: string;
+  label_he: string;
+  label_en: string;
+  type: string;
+  icon: string;
+  scale: string | null;
+  geo_viewport: string | null;
+  ann_viewport: string | null;
+  pair_score: number;
+  entity_count: number;
+  bbox: [number, number, number, number];
+}
+
+export interface SheetRenderResult {
+  sheets: SheetRender[];
+  files: string[];
+  viewport_count: number;
+  sheet_count: number;
+}
+
+export interface PreviewSheet {
+  index: number;
+  filename: string;
+  geometry_vp?: string | null;
+  annotation_vp?: string | null;
+  block?: string;
+  source?: string;
+  line_count: number;
+}
+
+export interface PreviewResult {
+  preview_count: number;
+  previews: PreviewSheet[];
+  output_dir: string;
+}
+
+/**
+ * Deterministic, fast PNG preview renderer. Reads exploration JSON from disk
+ * and emits one PNG per logical sheet. Used as a fast-path so the user sees
+ * thumbnails ~10 s after upload while the AI codegen pipeline keeps cooking.
+ */
+export async function renderDxfPreviews(
+  dxfPath: string,
+  explorationJsonPath: string,
+  outputDir: string,
+): Promise<PreviewResult> {
+  const { stdout } = await execFileAsync(
+    PYTHON_BIN,
+    [PREVIEW_RENDERER, dxfPath, explorationJsonPath, outputDir],
+    {
+      maxBuffer: 50 * 1024 * 1024,
+      timeout: 60_000,
+      env: { ...process.env, PYTHONIOENCODING: 'utf-8' },
+    },
+  );
+  const parsed = JSON.parse(stdout.trim());
+  if (parsed.error) throw new Error(`Preview render failed: ${parsed.error}`);
+  return parsed as PreviewResult;
+}
+
+/**
+ * Render a DXF as one composite SVG per logical sheet by pairing geometry +
+ * annotation viewports. Returns rich metadata for the frontend sheet browser.
+ */
+export async function renderDxfSheets(dxfPath: string, outputDir: string): Promise<SheetRenderResult> {
+  const { stdout } = await execFileAsync(PYTHON_BIN, [SHEET_RENDERER, dxfPath, outputDir], {
+    maxBuffer: 50 * 1024 * 1024,
+    env: { ...process.env, PYTHONIOENCODING: 'utf-8' },
+  });
+  const parsed = JSON.parse(stdout.trim());
+  if (parsed.error) throw new Error(`Sheet render failed: ${parsed.error}`);
+  return parsed as SheetRenderResult;
 }
