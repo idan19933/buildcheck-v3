@@ -8,8 +8,8 @@ import api from '../services/api';
 import ComplianceReport from '../components/ComplianceReport';
 import AddonAgentCard from '../components/AddonAgentCard';
 import DxfPreview from '../components/DxfPreview';
-import { Badge, Button, Card, ErrorState, SkeletonCard, StatCard } from '../components/ui';
-import { cn, scoreTone, timeAgoHe } from '../lib/utils';
+import { AnimatedNumber, Badge, Button, Card, ErrorState, ScoreRing, SkeletonCard, StackedBar } from '../components/ui';
+import { cn, timeAgoHe } from '../lib/utils';
 import type { Analysis, AddonInfo } from '../types';
 
 const STATUS_LABELS: Record<string, string> = {
@@ -68,7 +68,6 @@ export default function AnalysisPage() {
   const inProgress = ['PENDING', 'EXTRACTING_DXF', 'EXTRACTING_TAVA', 'ANALYZING'].includes(analysis.status);
   const done = analysis.status === 'COMPLETED';
   const failed = analysis.status === 'FAILED';
-  const tone = scoreTone(analysis.overallScore);
 
   return (
     <div>
@@ -144,39 +143,31 @@ export default function AnalysisPage() {
 
       {done && (
         <>
-          {/* Score + stats */}
-          <div className="grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-5 mb-8">
-            <Card className={cn(
-              'flex flex-col items-center justify-center min-w-[180px] py-8',
-              tone === 'success' && 'border-success/30 bg-success-soft/40',
-              tone === 'warning' && 'border-warning/30 bg-warning-soft/40',
-              tone === 'danger'  && 'border-danger/30 bg-danger-soft/40',
-            )}>
-              <div className={cn(
-                'text-6xl font-semibold tabular-nums font-latin leading-none',
-                tone === 'success' && 'text-success',
-                tone === 'warning' && 'text-warning',
-                tone === 'danger'  && 'text-danger',
-                tone === 'neutral' && 'text-text-muted',
-              )} dir="ltr">
-                {analysis.overallScore ?? 0}
+          {/* Hero scoreboard — donut ring + 4 stat tiles + 4-segment proportional bar */}
+          <Card className="mb-8 overflow-hidden">
+            <div className="grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-8 items-center">
+              <ScoreRing score={analysis.overallScore} />
+              <div className="space-y-5 min-w-0">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <StatTile label="עובר"     value={analysis.passCount ?? 0}        tone="success" icon={<CheckCircle2 className="h-4 w-4" />} />
+                  <StatTile label="לא עובר"   value={analysis.failCount ?? 0}        tone="danger"  icon={<XCircle className="h-4 w-4" />} />
+                  <StatTile label="אזהרה"    value={analysis.warningCount ?? 0}     tone="warning" icon={<AlertTriangle className="h-4 w-4" />} />
+                  <StatTile label="לא נבדק"  value={analysis.cannotCheckCount ?? 0} tone="neutral" icon={<HelpCircle className="h-4 w-4" />} />
+                </div>
+                <StackedBar
+                  segments={[
+                    { value: analysis.passCount ?? 0,        color: 'var(--color-success)', label: 'עובר' },
+                    { value: analysis.failCount ?? 0,        color: 'var(--color-danger)',  label: 'לא עובר' },
+                    { value: analysis.warningCount ?? 0,     color: 'var(--color-warning)', label: 'אזהרה' },
+                    { value: analysis.cannotCheckCount ?? 0, color: 'var(--color-border-strong)', label: 'לא נבדק' },
+                  ]}
+                />
+                {analysis.summary && (
+                  <p className="text-sm text-text-soft leading-relaxed">{analysis.summary}</p>
+                )}
               </div>
-              <div className="text-xs text-text-soft uppercase tracking-wider mt-3">ציון כולל</div>
-            </Card>
-
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <StatCard label="עובר"          value={analysis.passCount ?? 0}         tone="success" icon={<CheckCircle2 className="h-4 w-4 text-success" />} />
-              <StatCard label="לא עובר"        value={analysis.failCount ?? 0}         tone="danger"  icon={<XCircle className="h-4 w-4 text-danger" />} />
-              <StatCard label="אזהרה"         value={analysis.warningCount ?? 0}      tone="warning" icon={<AlertTriangle className="h-4 w-4 text-warning" />} />
-              <StatCard label="לא נבדק"       value={analysis.cannotCheckCount ?? 0}  tone="neutral" icon={<HelpCircle className="h-4 w-4 text-text-muted" />} />
             </div>
-          </div>
-
-          {analysis.summary && (
-            <Card className="mb-8 bg-surface-alt">
-              <div className="text-sm text-text leading-relaxed">{analysis.summary}</div>
-            </Card>
-          )}
+          </Card>
 
           {/* Compliance results with filter chips */}
           <SectionHeader title='דרישות התב"ע' subtitle="Core Compliance" />
@@ -209,6 +200,28 @@ export default function AnalysisPage() {
       {viewAddon && viewAddon.run?.results && (
         <AddonModal addon={viewAddon} onClose={() => setViewAddon(null)} />
       )}
+    </div>
+  );
+}
+
+function StatTile({
+  label, value, tone, icon,
+}: { label: string; value: number; tone: 'success' | 'danger' | 'warning' | 'neutral'; icon: React.ReactNode }) {
+  const cls = {
+    success: 'bg-success-soft text-success',
+    danger:  'bg-danger-soft text-danger',
+    warning: 'bg-warning-soft text-warning',
+    neutral: 'bg-surface-muted text-text-muted',
+  }[tone];
+  return (
+    <div className="bg-surface-alt border border-border rounded-md px-4 py-3">
+      <div className="flex items-center gap-2 text-xs text-text-soft mb-1.5">
+        <span className={cn('h-5 w-5 rounded inline-flex items-center justify-center', cls)}>{icon}</span>
+        {label}
+      </div>
+      <div className="text-2xl font-semibold tabular-nums font-latin text-text leading-none">
+        <AnimatedNumber value={value} />
+      </div>
     </div>
   );
 }
