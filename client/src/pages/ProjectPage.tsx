@@ -110,7 +110,7 @@ export default function ProjectPage() {
           <EmptyState
             icon={<Inbox className="h-8 w-8" />}
             title="עדיין אין בדיקות"
-            description="הפעל בדיקה ראשונה כדי לראות תוצאות התאמה לדרישות התב"ע."
+            description={'הפעל בדיקה ראשונה כדי לראות תוצאות התאמה לדרישות התב"ע.'}
           />
         ) : (
           <div className="space-y-3">
