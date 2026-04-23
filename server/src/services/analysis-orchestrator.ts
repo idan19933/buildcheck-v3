@@ -1,9 +1,15 @@
+import { promises as fs } from 'node:fs';
 import path from 'path';
 import { prisma } from '../lib/prisma';
 import { classifyDxfTexts, extractDxfViewports, renderDxfPreviews } from './dxf.service';
 import { processDxf } from './dxf-pipeline.service';
 import { extractPdfText, parseTavaRequirements, TavaRequirement } from './pdf-extract.service';
 import { runCoreComplianceAgent } from './core-compliance-agent';
+import {
+  buildSemanticIndex,
+  type ClassifiedTextRecord,
+  type SemanticIndex,
+} from './semantic-index';
 import { FireAddonAgent } from './addon-agents/fire-agent';
 import { WaterAddonAgent } from './addon-agents/water-agent';
 import { ElectricityAddonAgent } from './addon-agents/electricity-agent';
@@ -119,6 +125,33 @@ export async function runCoreAnalysis(analysisId: string): Promise<void> {
       console.error(`[semantic:${dxfFileId.slice(0, 8)}] failed: ${semanticSettled.error}`);
     }
 
+    // Read classified_texts.json back from disk and aggregate it into a
+    // structured SemanticIndex the compliance agent can reason over. Without
+    // this, the classifier output (16 building lines, 591 elevations, etc.)
+    // would be persisted to ClassificationLog but never reach the agent.
+    let semanticIndex: SemanticIndex | null = null;
+    if (semanticSettled.ok) {
+      try {
+        const raw = await fs.readFile(semanticOutPath, 'utf-8');
+        const records = JSON.parse(raw) as ClassifiedTextRecord[];
+        semanticIndex = buildSemanticIndex(records);
+        console.log(
+          `[semantic-index:${dxfFileId.slice(0, 8)}] ` +
+          `boundaries=${semanticIndex.boundaries.total} ` +
+          `rooms=${semanticIndex.rooms.total} ` +
+          `elev_abs=${semanticIndex.elevations.absolute.total} ` +
+          `elev_rel=${semanticIndex.elevations.relative.total} ` +
+          `vp_with_both=[${semanticIndex.elevations.viewportsWithBoth.join(',')}]`,
+        );
+      } catch (e) {
+        console.error(
+          `[semantic-index:${dxfFileId.slice(0, 8)}] load failed (${semanticOutPath}):`,
+          e instanceof Error ? e.message : e,
+        );
+        semanticIndex = null;
+      }
+    }
+
     let renderedSheets: object | undefined;
     if (pipelineSettled.ok) {
       const r = pipelineSettled.value;
@@ -206,7 +239,7 @@ export async function runCoreAnalysis(analysisId: string): Promise<void> {
       data: { status: 'ANALYZING' },
     });
 
-    const result = await runCoreComplianceAgent(viewportData, requirements, tavaText);
+    const result = await runCoreComplianceAgent(viewportData, requirements, tavaText, semanticIndex);
 
     await prisma.analysis.update({
       where: { id: analysisId },
