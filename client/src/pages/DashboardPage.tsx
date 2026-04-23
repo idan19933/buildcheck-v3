@@ -4,7 +4,7 @@ import { Plus, Search, FolderOpen, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '../services/api';
 import { useAuth } from '../hooks/useAuth';
-import { Badge, Button, Card, EmptyState, ErrorState, SkeletonCard } from '../components/ui';
+import { Button, Card, EmptyState, ErrorState, SkeletonCard } from '../components/ui';
 import { cn, scoreTone, timeAgoHe } from '../lib/utils';
 import type { Project } from '../types';
 
@@ -105,50 +105,84 @@ export default function DashboardPage() {
   );
 }
 
+// Status → cover gradient (subtle, status-aware so the grid doesn't read monotone)
+const STATUS_COVERS: Record<Project['status'], string> = {
+  DRAFT:     'from-surface-muted via-surface-alt to-surface-muted',
+  READY:     'from-brand-soft via-surface-alt to-brand-soft/40',
+  ANALYZING: 'from-warning-soft via-surface-alt to-brand-soft/30',
+  COMPLETED: 'from-success-soft via-surface-alt to-brand-soft/30',
+};
+
+const STATUS_RIBBON: Record<Project['status'], { bg: string; text: string }> = {
+  DRAFT:     { bg: 'bg-surface-muted',      text: 'text-text-soft' },
+  READY:     { bg: 'bg-brand text-white',   text: 'text-white' },
+  ANALYZING: { bg: 'bg-warning text-white', text: 'text-white' },
+  COMPLETED: { bg: 'bg-success text-white', text: 'text-white' },
+};
+
 function ProjectCard({ project }: { project: Project }) {
-  const initials = (project.name || '?').slice(0, 2);
-  // Score-tinted gradient placeholder; if there's a render thumbnail we'd use it here.
-  const score = project._count?.analyses ? null : null; // hook for future overallScore aggregation
+  const cover = STATUS_COVERS[project.status];
+  const ribbon = STATUS_RIBBON[project.status];
+  const hasFiles = !!project.dxfFile && !!project.tavaFile;
 
   return (
     <Link to={`/projects/${project.id}`} className="group block">
       <Card hoverable padded={false} className="overflow-hidden h-full flex flex-col">
-        {/* 16:10 thumbnail / placeholder */}
-        <div className="aspect-[16/10] bg-gradient-to-br from-brand-soft via-surface-muted to-brand-soft/40 relative overflow-hidden">
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-5xl font-semibold text-brand-dark/30 font-latin tracking-tight" dir="ltr">
-              {initials}
+        {/* Tinted cover — title-driven, status-tinted, no monogram. */}
+        <div className={cn('relative aspect-[16/10] overflow-hidden bg-gradient-to-br', cover)}>
+          {/* Subtle blueprint-grid texture */}
+          <div
+            className="absolute inset-0 opacity-[0.04] pointer-events-none"
+            style={{
+              backgroundImage:
+                'linear-gradient(to right, var(--color-text) 1px, transparent 1px), linear-gradient(to bottom, var(--color-text) 1px, transparent 1px)',
+              backgroundSize: '24px 24px',
+            }}
+          />
+          {/* Status ribbon top-end (RTL: visually top-right) */}
+          <div className="absolute top-3 end-3">
+            <span className={cn('inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium', ribbon.bg)}>
+              <span className={cn('h-1.5 w-1.5 rounded-full',
+                project.status === 'COMPLETED' && 'bg-white',
+                project.status === 'ANALYZING' && 'bg-white animate-pulse',
+                project.status === 'READY'     && 'bg-white',
+                project.status === 'DRAFT'     && 'bg-text-muted',
+              )} />
+              {STATUS_LABELS[project.status]}
+            </span>
+          </div>
+          {/* Title is the cover — display weight, multi-line, anchored bottom */}
+          <div className="absolute inset-x-0 bottom-0 p-4">
+            <div className="text-2xl font-semibold text-text leading-tight tracking-tight line-clamp-2 group-hover:text-brand-dark transition-colors duration-fast">
+              {project.name}
             </div>
           </div>
-          <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-surface/80 to-transparent" />
         </div>
 
-        <div className="p-5 flex-1 flex flex-col">
-          <div className="flex items-start gap-2 mb-3">
-            <FileText className="h-4 w-4 text-brand mt-1 flex-shrink-0" />
-            <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-text truncate group-hover:text-brand-dark transition-colors duration-fast">
-                {project.name}
-              </h3>
-              {project.locality && (
-                <div className="text-xs text-text-soft truncate mt-0.5">{project.locality}</div>
-              )}
+        {/* Body */}
+        <div className="p-4 flex-1 flex flex-col gap-2">
+          {project.locality && (
+            <div className="flex items-center gap-1.5 text-xs text-text-soft">
+              <FileText className="h-3.5 w-3.5 text-brand flex-shrink-0" />
+              <span className="truncate">{project.locality}</span>
             </div>
-          </div>
-
-          {project.description && (
-            <p className="text-sm text-text-soft line-clamp-2 mb-3">{project.description}</p>
           )}
 
-          <div className="mt-auto flex items-center justify-between gap-2 pt-3 border-t border-border">
-            <Badge tone={STATUS_TONES[project.status]} dot>
-              {STATUS_LABELS[project.status]}
-            </Badge>
-            <div className="flex items-center gap-3 text-xs text-text-muted">
-              <span>{project._count?.analyses ?? 0} בדיקות</span>
-              <span dir="ltr" className="font-latin">·</span>
-              <span>{timeAgoHe(project.createdAt)}</span>
-            </div>
+          {project.description && (
+            <p className="text-sm text-text-soft line-clamp-2">{project.description}</p>
+          )}
+
+          {/* Mini-stat row */}
+          <div className="mt-auto flex items-center gap-3 pt-3 border-t border-border text-xs text-text-soft">
+            <Stat n={project._count?.analyses ?? 0} label="בדיקות" />
+            <span className="text-text-muted">·</span>
+            <Stat n={(project.dxfFile ? 1 : 0) + (project.tavaFile ? 1 : 0)} label="קבצים" />
+            {!hasFiles && project.status === 'DRAFT' && (
+              <span className="ms-auto text-warning font-medium">דורש קבצים</span>
+            )}
+            {hasFiles && (
+              <span className="ms-auto text-text-muted">{timeAgoHe(project.createdAt)}</span>
+            )}
           </div>
         </div>
       </Card>
@@ -156,5 +190,14 @@ function ProjectCard({ project }: { project: Project }) {
   );
 }
 
+function Stat({ n, label }: { n: number; label: string }) {
+  return (
+    <span className="inline-flex items-center gap-1">
+      <span className="font-semibold text-text font-latin tabular-nums" dir="ltr">{n}</span>
+      <span>{label}</span>
+    </span>
+  );
+}
+
 // referenced for tone shape only — keeps tree-shaking happy
-void cn; void scoreTone;
+void scoreTone;
