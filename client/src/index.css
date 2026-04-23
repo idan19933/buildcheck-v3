@@ -1,19 +1,41 @@
+@import './styles/tokens.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 html, body, #root { height: 100%; }
 body {
-  font-family: 'Heebo', system-ui, sans-serif;
-  background: #FDFBF5;
-  color: #14181F;
-  /* Drafting-paper grain — almost imperceptible, adds warmth */
-  background-image:
-    radial-gradient(circle at 20% 30%, rgba(180,83,9,0.012) 0, transparent 40%),
-    radial-gradient(circle at 85% 80%, rgba(20,24,31,0.018) 0, transparent 50%);
+  font-family: 'Heebo', 'Inter', system-ui, sans-serif;
+  background: var(--color-surface-alt);
+  color: var(--color-text);
+  /* Hebrew benefits from a slightly looser line-height */
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Numbers, codes, identifiers stay LTR + Inter */
+[dir='ltr'].font-latin {
+  font-family: 'Inter', system-ui, sans-serif;
 }
 
 ::selection {
-  background: rgba(180, 83, 9, 0.18);
-  color: #14181F;
+  background: var(--color-brand-soft);
+  color: var(--color-brand-dark);
 }
+
+/* Focus ring everywhere — visible, brand-tinted */
+:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-surface), 0 0 0 4px var(--color-brand);
+  border-radius: var(--radius-sm);
+}
+
+/* Scrollbars — thin, subtle */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong);
+  border-radius: var(--radius-full);
+  border: 2px solid var(--color-surface-alt);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--color-text-muted); }
