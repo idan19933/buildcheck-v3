@@ -1,19 +1,33 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, CheckCircle2, XCircle, AlertTriangle, HelpCircle, Loader2 } from 'lucide-react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import {
+  ArrowRight, CheckCircle2, XCircle, AlertTriangle, HelpCircle, Loader2,
+  Download, FileText, X,
+} from 'lucide-react';
 import api from '../services/api';
 import ComplianceReport from '../components/ComplianceReport';
 import AddonAgentCard from '../components/AddonAgentCard';
 import DxfPreview from '../components/DxfPreview';
+import { Badge, Button, Card, ErrorState, SkeletonCard, StatCard } from '../components/ui';
+import { cn, scoreTone, timeAgoHe } from '../lib/utils';
 import type { Analysis, AddonInfo } from '../types';
 
 const STATUS_LABELS: Record<string, string> = {
-  PENDING: 'ממתין…',
+  PENDING:        'ממתין…',
   EXTRACTING_DXF: 'מחלץ נתונים מה-DXF…',
-  EXTRACTING_TAVA: 'מחלץ דרישות מהתב"ע…',
-  ANALYZING: 'בודק תאימות…',
-  COMPLETED: 'הושלם',
-  FAILED: 'נכשל',
+  EXTRACTING_TAVA:'מחלץ דרישות מהתב"ע…',
+  ANALYZING:      'בודק תאימות…',
+  COMPLETED:      'הושלם',
+  FAILED:         'נכשל',
+};
+
+const STATUS_TONES: Record<string, 'neutral' | 'brand' | 'success' | 'danger'> = {
+  PENDING:         'neutral',
+  EXTRACTING_DXF:  'brand',
+  EXTRACTING_TAVA: 'brand',
+  ANALYZING:       'brand',
+  COMPLETED:       'success',
+  FAILED:          'danger',
 };
 
 export default function AnalysisPage() {
@@ -22,15 +36,20 @@ export default function AnalysisPage() {
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [addons, setAddons] = useState<AddonInfo[]>([]);
   const [viewAddon, setViewAddon] = useState<AddonInfo | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const polling = useRef(true);
 
   const loadAll = async () => {
-    const { data } = await api.get<{ analysis: Analysis }>(`/analyses/${id}`);
-    setAnalysis(data.analysis);
-    if (data.analysis.status === 'COMPLETED' || data.analysis.status === 'FAILED') {
-      polling.current = false;
-      const addonRes = await api.get<{ addons: AddonInfo[] }>(`/analyses/${id}/addons`);
-      setAddons(addonRes.data.addons);
+    try {
+      const { data } = await api.get<{ analysis: Analysis }>(`/analyses/${id}`);
+      setAnalysis(data.analysis);
+      if (data.analysis.status === 'COMPLETED' || data.analysis.status === 'FAILED') {
+        polling.current = false;
+        const addonRes = await api.get<{ addons: AddonInfo[] }>(`/analyses/${id}/addons`);
+        setAddons(addonRes.data.addons);
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'נכשל לטעון בדיקה');
     }
   };
 
@@ -38,134 +57,227 @@ export default function AnalysisPage() {
     loadAll();
     const t = setInterval(() => { if (polling.current) loadAll(); }, 2500);
     return () => clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
-  if (!analysis) return <div className="text-slate-500">טוען…</div>;
+  if (error) return <div><BackLink /><ErrorState message={error} onRetry={loadAll} /></div>;
+  if (!analysis) {
+    return <div className="space-y-5"><SkeletonCard /><SkeletonCard /></div>;
+  }
 
   const inProgress = ['PENDING', 'EXTRACTING_DXF', 'EXTRACTING_TAVA', 'ANALYZING'].includes(analysis.status);
   const done = analysis.status === 'COMPLETED';
+  const failed = analysis.status === 'FAILED';
+  const tone = scoreTone(analysis.overallScore);
 
   return (
     <div>
-      <button onClick={() => nav(-1)} className="text-ink-50 hover:text-terra-600 text-xs mb-5 flex items-center gap-1.5 font-mono tracking-wider transition-colors">
-        <ArrowLeft className="w-3.5 h-3.5" /> חזרה
-      </button>
-      <div className="mb-6 pb-4 border-b border-ink-300/15">
-        <div className="font-mono text-[10px] tracking-[0.22em] text-ink-50 uppercase mb-1">
-          Compliance Audit · {analysis.id.slice(0, 8)}
+      <BackLink />
+
+      {/* Hero */}
+      <Card padded={false} className="mb-6 overflow-hidden">
+        <div className="bg-gradient-to-l from-brand-soft/60 via-brand-soft/30 to-surface px-6 py-8 sm:py-10">
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div className="min-w-0">
+              {analysis.project?.name && (
+                <div className="text-sm text-text-soft mb-1">
+                  <Link to={`/projects/${analysis.projectId}`} className="hover:text-brand transition-colors duration-fast">
+                    {analysis.project.name}
+                  </Link>
+                </div>
+              )}
+              <h1 className="text-2xl sm:text-3xl font-semibold text-text">בדיקת תאימות</h1>
+              <div className="flex items-center gap-3 mt-3">
+                <Badge tone={STATUS_TONES[analysis.status]} dot>
+                  {STATUS_LABELS[analysis.status] || analysis.status}
+                </Badge>
+                {analysis.completedAt && (
+                  <span className="text-xs text-text-muted">{timeAgoHe(analysis.completedAt)}</span>
+                )}
+                <span className="text-xs text-text-muted font-latin tracking-wider" dir="ltr">
+                  #{analysis.id.slice(0, 8)}
+                </span>
+              </div>
+            </div>
+
+            {done && (
+              <Button variant="outline" icon={<Download className="h-4 w-4" />} disabled>
+                ייצוא דוח
+              </Button>
+            )}
+          </div>
         </div>
-        <h1 className="font-serif text-3xl text-ink-300 leading-tight">בדיקת תאימות</h1>
-        <div className="text-ink-50 text-sm mt-1">{STATUS_LABELS[analysis.status] || analysis.status}</div>
-      </div>
+      </Card>
 
       {inProgress && (
-        <div className="bg-paper-100 border border-terra-500/25 px-5 py-4 flex items-center gap-3 mb-6">
-          <Loader2 className="w-5 h-5 animate-spin text-terra-500" />
-          <div className="text-sm text-ink-200">{STATUS_LABELS[analysis.status]}</div>
-        </div>
+        <Card className="mb-6 border-brand/30 bg-brand-soft/30">
+          <div className="flex items-center gap-3">
+            <Loader2 className="h-5 w-5 animate-spin text-brand" />
+            <div className="text-sm text-text">{STATUS_LABELS[analysis.status]}</div>
+          </div>
+        </Card>
       )}
 
-      {analysis.status === 'FAILED' && (
-        <div className="bg-red-50 border border-red-300 px-5 py-4 mb-6">
-          <div className="font-semibold text-red-800 mb-1 font-serif text-lg">הבדיקה נכשלה</div>
-          <div className="text-sm text-red-700 font-mono">{analysis.errorMessage}</div>
-        </div>
+      {failed && (
+        <Card className="mb-6 border-danger/30 bg-danger-soft">
+          <div className="flex items-start gap-3">
+            <XCircle className="h-5 w-5 text-danger mt-0.5 flex-shrink-0" />
+            <div>
+              <div className="font-semibold text-danger">הבדיקה נכשלה</div>
+              {analysis.errorMessage && (
+                <div className="text-sm text-text-soft mt-1 font-latin" dir="ltr">{analysis.errorMessage}</div>
+              )}
+            </div>
+          </div>
+        </Card>
       )}
 
-      {/* Render the sheet browser as soon as ANY rendered images exist (the
-          deterministic preview lands ~10s after upload, well before the AI
-          sheets finish). DxfPreview internally shows previews vs final sheets. */}
+      {/* Sheet browser — shows previews early, swaps to AI sheets when ready */}
       {analysis.project?.dxfFile?.renderedImages ? (
-        <DxfPreview
-          dxfFileId={analysis.project.dxfFile.id}
-          rendered={analysis.project.dxfFile.renderedImages}
-        />
+        <div className="mb-8">
+          <DxfPreview
+            dxfFileId={analysis.project.dxfFile.id}
+            rendered={analysis.project.dxfFile.renderedImages}
+          />
+        </div>
       ) : null}
 
       {done && (
         <>
-          <div className="bg-paper-50 border border-ink-300/12 shadow-plate p-6 mb-8 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-1 h-full bg-terra-500/70" />
-            <div className="flex items-center gap-8">
-              <div className="text-center pl-6 border-l border-ink-300/15">
-                <div className="font-serif text-5xl text-ink-300 leading-none tabular-nums">
-                  {analysis.overallScore ?? 0}
-                </div>
-                <div className="font-mono text-[10px] text-ink-50 uppercase tracking-[0.2em] mt-2">
-                  Overall Score
-                </div>
+          {/* Score + stats */}
+          <div className="grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-5 mb-8">
+            <Card className={cn(
+              'flex flex-col items-center justify-center min-w-[180px] py-8',
+              tone === 'success' && 'border-success/30 bg-success-soft/40',
+              tone === 'warning' && 'border-warning/30 bg-warning-soft/40',
+              tone === 'danger'  && 'border-danger/30 bg-danger-soft/40',
+            )}>
+              <div className={cn(
+                'text-6xl font-semibold tabular-nums font-latin leading-none',
+                tone === 'success' && 'text-success',
+                tone === 'warning' && 'text-warning',
+                tone === 'danger'  && 'text-danger',
+                tone === 'neutral' && 'text-text-muted',
+              )} dir="ltr">
+                {analysis.overallScore ?? 0}
               </div>
-              <div className="grid grid-cols-4 gap-3 flex-1">
-                <Stat icon={<CheckCircle2 className="w-4 h-4 text-emerald-700" />} n={analysis.passCount} label="עובר" />
-                <Stat icon={<XCircle className="w-4 h-4 text-red-700" />} n={analysis.failCount} label="לא עובר" />
-                <Stat icon={<AlertTriangle className="w-4 h-4 text-amber-700" />} n={analysis.warningCount} label="אזהרה" />
-                <Stat icon={<HelpCircle className="w-4 h-4 text-ink-50" />} n={analysis.cannotCheckCount} label="לא נבדק" />
-              </div>
+              <div className="text-xs text-text-soft uppercase tracking-wider mt-3">ציון כולל</div>
+            </Card>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <StatCard label="עובר"          value={analysis.passCount ?? 0}         tone="success" icon={<CheckCircle2 className="h-4 w-4 text-success" />} />
+              <StatCard label="לא עובר"        value={analysis.failCount ?? 0}         tone="danger"  icon={<XCircle className="h-4 w-4 text-danger" />} />
+              <StatCard label="אזהרה"         value={analysis.warningCount ?? 0}      tone="warning" icon={<AlertTriangle className="h-4 w-4 text-warning" />} />
+              <StatCard label="לא נבדק"       value={analysis.cannotCheckCount ?? 0}  tone="neutral" icon={<HelpCircle className="h-4 w-4 text-text-muted" />} />
             </div>
-            {analysis.summary && (
-              <div className="mt-5 pt-4 border-t border-ink-300/10 text-sm text-ink-200 leading-relaxed">
-                {analysis.summary}
-              </div>
-            )}
           </div>
 
-          <SectionHeader eyebrow="Core Compliance" title='דרישות התב"ע' />
+          {analysis.summary && (
+            <Card className="mb-8 bg-surface-alt">
+              <div className="text-sm text-text leading-relaxed">{analysis.summary}</div>
+            </Card>
+          )}
+
+          {/* Compliance results with filter chips */}
+          <SectionHeader title='דרישות התב"ע' subtitle="Core Compliance" />
           <ComplianceReport results={analysis.coreResults || []} />
 
-          <div className="mt-12">
-            <SectionHeader eyebrow="Optional Checks" title="בדיקות נוספות" />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-            {addons.map((info) => (
-              <AddonAgentCard
-                key={info.domain}
-                info={info}
-                projectId={analysis.projectId}
-                analysisId={analysis.id}
-                onChange={loadAll}
-                onView={() => setViewAddon(info)}
-              />
-            ))}
-          </div>
+          {/* Add-on agents */}
+          {addons.length > 0 && (
+            <>
+              <div className="mt-12">
+                <SectionHeader title="בדיקות נוספות" subtitle="Optional Checks" />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {addons.map((info) => (
+                  <AddonAgentCard
+                    key={info.domain}
+                    info={info}
+                    projectId={analysis.projectId}
+                    analysisId={analysis.id}
+                    onChange={loadAll}
+                    onView={() => setViewAddon(info)}
+                  />
+                ))}
+              </div>
+            </>
+          )}
         </>
       )}
 
+      {/* Addon detail modal */}
       {viewAddon && viewAddon.run?.results && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-6 z-50" onClick={() => setViewAddon(null)}>
-          <div className="bg-white rounded-lg max-w-3xl w-full max-h-[85vh] overflow-auto p-6" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">{viewAddon.displayName}</h3>
-              <button onClick={() => setViewAddon(null)} className="text-slate-400 hover:text-slate-600">✕</button>
-            </div>
-            {viewAddon.run.summary && (
-              <div className="text-sm text-slate-700 mb-4 leading-relaxed">{viewAddon.run.summary}</div>
-            )}
-            <ComplianceReport results={viewAddon.run.results} />
-          </div>
-        </div>
+        <AddonModal addon={viewAddon} onClose={() => setViewAddon(null)} />
       )}
     </div>
   );
 }
 
-function Stat({ icon, n, label }: { icon: JSX.Element; n: number | null; label: string }) {
+function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
-    <div className="bg-paper-100/60 border border-ink-300/8 px-3 py-2.5">
-      <div className="flex items-center gap-1.5 text-xs text-ink-100 mb-1">{icon}{label}</div>
-      <div className="font-serif text-2xl text-ink-300 tabular-nums">{n ?? 0}</div>
+    <div className="mb-5 pb-3 border-b border-border">
+      {subtitle && (
+        <div className="text-[11px] uppercase tracking-[0.18em] text-text-muted font-latin" dir="ltr">
+          {subtitle}
+        </div>
+      )}
+      <h2 className="text-xl font-semibold text-text mt-1">{title}</h2>
     </div>
   );
 }
 
-function SectionHeader({ eyebrow, title }: { eyebrow: string; title: string }) {
+function AddonModal({ addon, onClose }: { addon: AddonInfo; onClose: () => void }) {
+  // Trap focus + close on ESC
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', onKey);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = '';
+    };
+  }, [onClose]);
+
   return (
-    <div className="mb-5 pb-3 border-b border-ink-300/15 flex items-end justify-between">
-      <div>
-        <div className="font-mono text-[10px] tracking-[0.22em] text-ink-50 uppercase mb-1">
-          {eyebrow}
+    <div
+      className="fixed inset-0 bg-ink-300/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 sm:p-8"
+      style={{ background: 'rgba(15, 23, 42, 0.4)' }}
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+    >
+      <div
+        className="bg-surface rounded-lg shadow-xl w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-border">
+          <h3 className="text-lg font-semibold text-text">{addon.displayName}</h3>
+          <button onClick={onClose} aria-label="סגור"
+            className="p-1.5 rounded-md text-text-muted hover:text-text hover:bg-surface-muted transition-colors duration-fast">
+            <X className="h-5 w-5" />
+          </button>
         </div>
-        <h2 className="font-serif text-2xl text-ink-300 leading-tight">{title}</h2>
+        <div className="overflow-auto p-5 flex-1">
+          {addon.run?.summary && (
+            <div className="text-sm text-text-soft mb-5 leading-relaxed">{addon.run.summary}</div>
+          )}
+          <ComplianceReport results={addon.run?.results || []} />
+        </div>
       </div>
     </div>
   );
 }
+
+function BackLink() {
+  return (
+    <button
+      onClick={() => window.history.back()}
+      className="inline-flex items-center gap-1.5 text-sm text-text-soft hover:text-brand transition-colors duration-fast mb-5"
+    >
+      <ArrowRight className="h-4 w-4" />
+      חזרה
+    </button>
+  );
+}
+
+void FileText;
