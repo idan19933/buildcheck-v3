@@ -1,6 +1,7 @@
 import { callClaude, parseJsonResponse } from './claude.service';
 import type { ViewportExtraction } from './dxf.service';
 import type { TavaRequirement } from './pdf-extract.service';
+import { buildSemanticPromptSection, type SemanticIndex } from './semantic-index';
 
 export interface ComplianceResult {
   requirement: string;
@@ -127,8 +128,13 @@ export async function runCoreComplianceAgent(
   viewportData: ViewportExtraction,
   tavaRequirements: TavaRequirement[],
   tavaFullText: string,
+  semanticIndex: SemanticIndex | null,
 ): Promise<CoreAnalysisResult> {
   const dxf = buildDxfSummary(viewportData);
+  const semanticSection = semanticIndex
+    ? buildSemanticPromptSection(semanticIndex)
+    : '## סיווג סמנטי של טקסטים\n\n_ניתוח סמנטי לא זמין לקובץ זה. ' +
+      'התבסס על השדות הלא-מסווגים בלבד._';
 
   const prompt = `אתה מהנדס בודק תוכניות בנייה ישראלי מומחה. בדוק האם בקשת ההיתר (DXF) עומדת בדרישות התב"ע.
 
@@ -165,6 +171,8 @@ ${dxf.parking}
 ${dxf.areaCalculation}
 
 ${dxf.complianceData}
+
+${semanticSection}
 
 ## הוראות:
 1. עבור כל דרישה, החזר סטטוס:
