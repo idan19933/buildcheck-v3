@@ -51,7 +51,7 @@ export default function ProjectPage() {
   };
 
   if (loading) return <div className="space-y-5"><SkeletonCard /><SkeletonCard /></div>;
-  if (error) return <ErrorState message={error} onRetry={load} />;
+  if (error) return <ErrorState technical={error} onRetry={load} />;
   if (!project) return null;
 
   const ready = !!project.dxfFile && !!project.tavaFile;

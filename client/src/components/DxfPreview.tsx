@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  X, Plus, Minus, RotateCcw, Layers, FileWarning,
+  X, Plus, Minus, RotateCcw, FileWarning,
   ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import type { PreviewSheet, RenderedSheets, SheetRender } from '../types';
@@ -140,16 +140,25 @@ export default function DxfPreview({ dxfFileId, rendered }: Props) {
         </div>
       )}
 
-      {/* Plate grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {filtered.map((sheet) => (
-          <SheetPlate
-            key={sheet.filename + '-' + sheet.sheet_num}
-            sheet={sheet}
-            dxfFileId={dxfFileId}
-            onOpen={() => setOpenIdx(sheets.indexOf(sheet))}
-          />
-        ))}
+      {/* Compact horizontal carousel — small thumbnails, scroll horizontally,
+          click to open the lightbox. Reduces a 13k-px page to ~280-px tall. */}
+      <div className="relative -mx-1">
+        <div
+          className="flex gap-3 overflow-x-auto pb-3 px-1 snap-x snap-mandatory scroll-smooth"
+          style={{ scrollbarWidth: 'thin' }}
+        >
+          {filtered.map((sheet) => (
+            <SheetThumb
+              key={sheet.filename + '-' + sheet.sheet_num}
+              sheet={sheet}
+              dxfFileId={dxfFileId}
+              onOpen={() => setOpenIdx(sheets.indexOf(sheet))}
+            />
+          ))}
+        </div>
+        {/* Edge fade hints scrollability */}
+        <div className="absolute end-0 top-0 bottom-3 w-12 bg-gradient-to-l from-surface-alt to-transparent pointer-events-none" />
+        <div className="absolute start-0 top-0 bottom-3 w-12 bg-gradient-to-r from-surface-alt to-transparent pointer-events-none" />
       </div>
 
       {openIdx != null && (
@@ -188,9 +197,9 @@ function FilterChip({ active, label, count, onClick }: { active: boolean; label:
   );
 }
 
-// ───────────────────────────────────────────────── plate
+// ───────────────────────────────────────────────── compact thumb
 
-function SheetPlate({ sheet, dxfFileId, onOpen }: { sheet: SheetRender; dxfFileId: string; onOpen: () => void }) {
+function SheetThumb({ sheet, dxfFileId, onOpen }: { sheet: SheetRender; dxfFileId: string; onOpen: () => void }) {
   const src = `/api/renders/${dxfFileId}/${encodeURIComponent(sheet.filename)}`;
   const [imgError, setImgError] = useState(false);
   const plateCode = `${TYPE_PLATE_PREFIX[sheet.type] || 'DR'}.${String(sheet.sheet_num).padStart(2, '0')}`;
@@ -200,53 +209,47 @@ function SheetPlate({ sheet, dxfFileId, onOpen }: { sheet: SheetRender; dxfFileI
     <button
       onClick={onOpen}
       className={cn(
-        'group text-start block w-full overflow-hidden',
-        'bg-surface border border-border rounded-md shadow-xs',
+        'group flex-shrink-0 snap-start text-start overflow-hidden',
+        'w-[180px] bg-surface border border-border rounded-md shadow-xs',
         'transition-all duration-base',
         'hover:shadow-md hover:-translate-y-0.5 hover:border-brand/40',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2',
       )}
+      title={sheet.label_he}
     >
-      {/* metadata strip */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-border bg-surface-alt">
-        <span className="font-latin text-[10px] tracking-wider text-text-muted" dir="ltr">{plateCode}</span>
-        <Badge tone={tone} size="sm">{TYPE_LABELS_HE[sheet.type] || sheet.type}</Badge>
-      </div>
-
-      {/* canvas */}
-      <div className="relative aspect-[5/4] bg-white overflow-hidden border-b border-border">
+      {/* canvas — 16:10 ratio, white bg, image contains */}
+      <div className="relative aspect-[16/10] bg-white overflow-hidden">
         {!imgError ? (
           <img src={src} alt={sheet.label_he} loading="lazy"
-            className="absolute inset-0 w-full h-full object-contain p-3 transition-transform duration-slow group-hover:scale-[1.02]"
+            className="absolute inset-0 w-full h-full object-contain p-2 transition-transform duration-slow group-hover:scale-[1.05]"
             onError={() => setImgError(true)} />
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center text-text-muted">
-            <FileWarning className="h-6 w-6 mb-2 opacity-60" />
-            <span className="text-xs">לא ניתן להציג</span>
+            <FileWarning className="h-5 w-5 opacity-60" />
           </div>
         )}
-      </div>
-
-      {/* footer */}
-      <div className="px-3 py-3">
-        <div className="text-base font-semibold text-text leading-snug truncate" title={sheet.label_he}>
-          {sheet.label_he}
-        </div>
-        <div className="mt-1.5 flex items-center justify-between text-[11px] text-text-muted">
-          <span className="font-latin tabular-nums" dir="ltr">{sheet.scale || '—'}</span>
-          <span className="flex items-center gap-1 font-latin" dir="ltr" title="מקור">
-            <Layers className="h-3 w-3" />
-            <span className="tabular-nums">
-              {sheet.geo_viewport?.replace('VIEWPORT', 'V') || '—'}
-              {sheet.ann_viewport && sheet.ann_viewport !== sheet.geo_viewport
-                ? ` + ${sheet.ann_viewport.replace('VIEWPORT', 'V')}` : ''}
-            </span>
+        {/* Plate code chip top-start */}
+        <div className="absolute top-1.5 start-1.5">
+          <span className="px-1.5 py-0.5 rounded text-[9px] font-latin tracking-wider bg-text/80 text-white" dir="ltr">
+            {plateCode}
           </span>
         </div>
       </div>
 
-      {/* hover accent */}
-      <div className="h-0.5 bg-brand scale-x-0 group-hover:scale-x-100 origin-end transition-transform duration-base" />
+      {/* compact footer */}
+      <div className="px-2.5 py-2 border-t border-border bg-surface-alt">
+        <div className="text-xs font-semibold text-text leading-tight truncate">
+          {sheet.label_he}
+        </div>
+        <div className="mt-1 flex items-center justify-between gap-2">
+          <Badge tone={tone} size="sm" className="!px-1.5 !py-0 !text-[10px]">
+            {TYPE_LABELS_HE[sheet.type] || sheet.type}
+          </Badge>
+          <span className="text-[10px] font-latin tabular-nums text-text-muted" dir="ltr">
+            {sheet.scale || ''}
+          </span>
+        </div>
+      </div>
     </button>
   );
 }
