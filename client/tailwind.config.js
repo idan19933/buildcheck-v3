@@ -4,44 +4,68 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['"Heebo"', 'system-ui', 'sans-serif'],
-        serif: ['"Frank Ruhl Libre"', 'Georgia', 'serif'],
-        mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
+        hebrew: ['Heebo', 'system-ui', 'sans-serif'],
+        latin:  ['Inter', 'system-ui', 'sans-serif'],
+        sans:   ['Heebo', 'Inter', 'system-ui', 'sans-serif'],
+        mono:   ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
       },
       colors: {
-        paper: {
-          50: '#FDFBF5',
-          100: '#FAF7F0',
-          200: '#F2ECDF',
-          300: '#E8DFCC',
+        brand: {
+          DEFAULT: 'var(--color-brand)',
+          dark:    'var(--color-brand-dark)',
+          soft:    'var(--color-brand-soft)',
         },
-        ink: {
-          50: '#5C6273',
-          100: '#3A414F',
-          200: '#252A36',
-          300: '#14181F',
+        accent: 'var(--color-accent)',
+        success: { DEFAULT: 'var(--color-success)', soft: 'var(--color-success-soft)' },
+        warning: { DEFAULT: 'var(--color-warning)', soft: 'var(--color-warning-soft)' },
+        danger:  { DEFAULT: 'var(--color-danger)',  soft: 'var(--color-danger-soft)' },
+        info:    'var(--color-info)',
+        surface: {
+          DEFAULT: 'var(--color-surface)',
+          alt:     'var(--color-surface-alt)',
+          muted:   'var(--color-surface-muted)',
         },
-        terra: {
-          50: '#FBE9D9',
-          400: '#D97706',
-          500: '#B45309',
-          600: '#92400E',
+        border: {
+          DEFAULT: 'var(--color-border)',
+          strong:  'var(--color-border-strong)',
+        },
+        text: {
+          DEFAULT: 'var(--color-text)',
+          soft:    'var(--color-text-soft)',
+          muted:   'var(--color-text-muted)',
         },
       },
-      opacity: {
-        '8': '0.08',
-        '12': '0.12',
-        '15': '0.15',
-        '18': '0.18',
-        '22': '0.22',
-        '35': '0.35',
-        '65': '0.65',
-        '85': '0.85',
+      borderRadius: {
+        xs: 'var(--radius-xs)',
+        DEFAULT: 'var(--radius-sm)',
+        md: 'var(--radius-md)',
+        lg: 'var(--radius-lg)',
+        xl: 'var(--radius-xl)',
       },
       boxShadow: {
-        plate: '0 1px 0 0 rgba(20,24,31,0.06), 0 8px 24px -12px rgba(20,24,31,0.18)',
-        'plate-hover': '0 1px 0 0 rgba(20,24,31,0.08), 0 18px 40px -16px rgba(180,83,9,0.25), 0 6px 14px -8px rgba(20,24,31,0.20)',
-        sheet: '0 30px 60px -20px rgba(0,0,0,0.55), 0 12px 30px -10px rgba(0,0,0,0.45)',
+        xs: 'var(--shadow-xs)',
+        sm: 'var(--shadow-sm)',
+        md: 'var(--shadow-md)',
+        lg: 'var(--shadow-lg)',
+        xl: 'var(--shadow-xl)',
+      },
+      transitionDuration: {
+        fast: '120ms',
+        base: '200ms',
+        slow: '320ms',
+      },
+      transitionTimingFunction: {
+        smooth: 'cubic-bezier(0.4, 0, 0.2, 1)',
+      },
+      keyframes: {
+        shake: {
+          '0%, 100%': { transform: 'translateX(0)' },
+          '20%, 60%': { transform: 'translateX(-3px)' },
+          '40%, 80%': { transform: 'translateX(3px)' },
+        },
+      },
+      animation: {
+        shake: 'shake 200ms ease-in-out',
       },
     },
   },

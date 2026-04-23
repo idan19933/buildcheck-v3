@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  X, Maximize2, Minimize2, Plus, Minus, RotateCcw,
-  Layers, FileWarning, ChevronLeft, ChevronRight,
+  X, Plus, Minus, RotateCcw, Layers, FileWarning,
+  ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import type { PreviewSheet, RenderedSheets, SheetRender } from '../types';
+import { Badge } from './ui';
+import { cn } from '../lib/utils';
 
 interface Props {
   dxfFileId: string;
@@ -11,39 +13,37 @@ interface Props {
 }
 
 const TYPE_LABELS_HE: Record<string, string> = {
-  floor_plan: 'תוכניות קומה',
-  roof_plan: 'תוכניות גג',
-  cross_section: 'חתכים',
-  elevation: 'חזיתות',
-  site_plan: 'תוכניות פיתוח',
-  survey: 'מדידה',
+  floor_plan:      'תוכנית קומה',
+  roof_plan:       'תוכנית גג',
+  cross_section:   'חתך',
+  elevation:       'חזית',
+  site_plan:       'תוכנית פיתוח',
+  survey:          'מדידה',
   parking_section: 'חנייה',
-  index_page: 'תיק מידע',
-  unclassified: 'אחר',
+  index_page:      'תיק מידע',
+  area_calculation:'חישוב שטחים',
+  other:           'אחר',
+  unclassified:    'אחר',
 };
 
 const TYPE_PLATE_PREFIX: Record<string, string> = {
-  floor_plan: 'PL',
-  roof_plan: 'RF',
-  cross_section: 'SC',
-  elevation: 'EL',
-  site_plan: 'ST',
-  survey: 'SV',
-  parking_section: 'PK',
-  index_page: 'IX',
-  unclassified: 'DR',
+  floor_plan: 'PL', roof_plan: 'RF', cross_section: 'SC', elevation: 'EL',
+  site_plan: 'ST', survey: 'SV', parking_section: 'PK', index_page: 'IX',
+  area_calculation: 'AR', other: 'DR', unclassified: 'DR',
 };
 
-const TYPE_TINTS: Record<string, string> = {
-  floor_plan: 'bg-emerald-50 text-emerald-800 ring-emerald-700/15',
-  roof_plan: 'bg-sky-50 text-sky-800 ring-sky-700/15',
-  cross_section: 'bg-violet-50 text-violet-800 ring-violet-700/15',
-  elevation: 'bg-amber-50 text-amber-800 ring-amber-700/15',
-  site_plan: 'bg-lime-50 text-lime-800 ring-lime-700/15',
-  survey: 'bg-rose-50 text-rose-800 ring-rose-700/15',
-  parking_section: 'bg-blue-50 text-blue-800 ring-blue-700/15',
-  index_page: 'bg-stone-100 text-stone-800 ring-stone-700/15',
-  unclassified: 'bg-stone-50 text-stone-700 ring-stone-700/10',
+const TYPE_TONES: Record<string, 'success' | 'warning' | 'danger' | 'brand' | 'info' | 'neutral'> = {
+  floor_plan:      'success',
+  roof_plan:       'info',
+  cross_section:   'brand',
+  elevation:       'warning',
+  site_plan:       'success',
+  survey:          'danger',
+  parking_section: 'info',
+  index_page:      'neutral',
+  area_calculation:'brand',
+  other:           'neutral',
+  unclassified:    'neutral',
 };
 
 function isRenderedSheets(v: unknown): v is RenderedSheets {
@@ -74,28 +74,18 @@ export default function DxfPreview({ dxfFileId, rendered }: Props) {
     if (!rendered) return { sheets: [] as SheetRender[], isPreview: false };
     if (isRenderedSheets(rendered)) {
       const aiSheets = rendered.sheets || [];
-      // Prefer AI sheets when they've landed; otherwise show deterministic previews.
-      if (aiSheets.length > 0) {
-        return { sheets: aiSheets, isPreview: false };
-      }
+      if (aiSheets.length > 0) return { sheets: aiSheets, isPreview: false };
       const previews = rendered.previews ?? [];
       return { sheets: previews.map(previewToSheet), isPreview: previews.length > 0 };
     }
-    // Legacy shape: bare string[] of filenames.
     return {
       sheets: (rendered as string[]).map((filename, i): SheetRender => ({
-        sheet_num: i + 1,
-        filename,
+        sheet_num: i + 1, filename,
         label_he: filename.replace(/\.[a-z]+$/i, ''),
         label_en: filename.replace(/\.[a-z]+$/i, ''),
-        type: 'unclassified',
-        icon: '',
-        scale: null,
-        geo_viewport: null,
-        ann_viewport: null,
-        pair_score: 0,
-        entity_count: 0,
-        bbox: [0, 0, 0, 0],
+        type: 'unclassified', icon: '', scale: null,
+        geo_viewport: null, ann_viewport: null,
+        pair_score: 0, entity_count: 0, bbox: [0, 0, 0, 0],
       })),
       isPreview: false,
     };
@@ -118,73 +108,53 @@ export default function DxfPreview({ dxfFileId, rendered }: Props) {
   const types = Object.keys(typeCounts);
 
   return (
-    <section className="mb-10">
-      {/* Header bar */}
-      <header className="flex items-end justify-between gap-4 mb-5 pb-3 border-b border-ink-300/15">
+    <section>
+      {/* Header */}
+      <div className="flex items-end justify-between gap-4 mb-5 pb-3 border-b border-border">
         <div>
-          <div className="font-mono text-[10px] tracking-[0.22em] text-ink-50 uppercase mb-1">
-            {isPreview ? 'Quick Preview' : 'Drawing Sheets'} · {sheets.length.toString().padStart(2, '0')}
+          <div className="text-[11px] uppercase tracking-[0.18em] text-text-muted font-latin" dir="ltr">
+            {isPreview ? 'Quick Preview' : 'Drawing Sheets'} · <span className="tabular-nums">{sheets.length.toString().padStart(2, '0')}</span>
           </div>
-          <h2 className="font-serif text-2xl text-ink-300 leading-tight">
-            דפי התכנית
-          </h2>
+          <h2 className="text-xl font-semibold text-text mt-1">דפי התכנית</h2>
         </div>
-        {isPreview ? (
-          <div className="hidden sm:flex items-center gap-2 font-mono text-[10px] text-terra-600 text-left tracking-wider">
+        {isPreview && (
+          <div className="hidden sm:flex items-center gap-2 text-xs text-brand">
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-terra-500 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-terra-500" />
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-brand" />
             </span>
-            <span>AI labels processing…</span>
-          </div>
-        ) : (
-          <div className="hidden sm:block font-mono text-[10px] text-ink-50 text-left tracking-wider">
-            <div>Composite render</div>
-            <div className="text-ink-100">geo + annotations</div>
+            <span>תוויות AI מתעדכנות…</span>
           </div>
         )}
-      </header>
+      </div>
 
-      {/* Type filter chips */}
+      {/* Filter chips */}
       {types.length > 1 && (
         <div className="flex flex-wrap gap-2 mb-5">
-          <FilterChip
-            active={activeType === 'all'}
-            label="הכול"
-            count={sheets.length}
-            onClick={() => setActiveType('all')}
-          />
+          <FilterChip active={activeType === 'all'} label="הכול" count={sheets.length} onClick={() => setActiveType('all')} />
           {types.map(t => (
-            <FilterChip
-              key={t}
-              active={activeType === t}
-              label={TYPE_LABELS_HE[t] || t}
-              count={typeCounts[t]}
-              onClick={() => setActiveType(t)}
-            />
+            <FilterChip key={t} active={activeType === t}
+              label={TYPE_LABELS_HE[t] || t} count={typeCounts[t]}
+              onClick={() => setActiveType(t)} />
           ))}
         </div>
       )}
 
       {/* Plate grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-        {filtered.map((sheet) => {
-          const idx = sheets.indexOf(sheet);
-          return (
-            <SheetPlate
-              key={sheet.filename}
-              sheet={sheet}
-              dxfFileId={dxfFileId}
-              onOpen={() => setOpenIdx(idx)}
-            />
-          );
-        })}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {filtered.map((sheet) => (
+          <SheetPlate
+            key={sheet.filename + '-' + sheet.sheet_num}
+            sheet={sheet}
+            dxfFileId={dxfFileId}
+            onOpen={() => setOpenIdx(sheets.indexOf(sheet))}
+          />
+        ))}
       </div>
 
       {openIdx != null && (
         <SheetLightbox
-          dxfFileId={dxfFileId}
-          sheets={sheets}
+          dxfFileId={dxfFileId} sheets={sheets}
           index={openIdx}
           onIndexChange={setOpenIdx}
           onClose={() => setOpenIdx(null)}
@@ -194,150 +164,100 @@ export default function DxfPreview({ dxfFileId, rendered }: Props) {
   );
 }
 
-// ---------------------------------------------------------------- chip
+// ───────────────────────────────────────────────── chip
 
-function FilterChip({
-  active, label, count, onClick,
-}: { active: boolean; label: string; count: number; onClick: () => void }) {
+function FilterChip({ active, label, count, onClick }: { active: boolean; label: string; count: number; onClick: () => void }) {
   return (
     <button
       onClick={onClick}
-      className={[
-        'group inline-flex items-center gap-2 px-3 py-1.5 text-xs',
-        'border transition-all duration-150',
+      className={cn(
+        'inline-flex items-center gap-2 px-3 py-1.5 text-sm rounded-full border transition-colors duration-fast',
         active
-          ? 'bg-ink-300 text-paper-50 border-ink-300'
-          : 'bg-paper-50 text-ink-100 border-ink-300/15 hover:border-terra-500/40 hover:text-terra-600',
-      ].join(' ')}
+          ? 'bg-brand text-white border-brand'
+          : 'bg-surface text-text-soft border-border hover:bg-surface-muted hover:text-text',
+      )}
     >
       <span className="font-medium">{label}</span>
-      <span
-        className={[
-          'font-mono text-[10px] tabular-nums px-1.5 py-0.5 rounded-sm',
-          active ? 'bg-paper-50/15 text-paper-100' : 'bg-ink-300/8 text-ink-50 group-hover:bg-terra-500/10',
-        ].join(' ')}
-      >
+      <span className={cn(
+        'text-xs tabular-nums font-latin px-1.5 py-0.5 rounded-full',
+        active ? 'bg-white/20' : 'bg-surface-muted',
+      )} dir="ltr">
         {count}
       </span>
     </button>
   );
 }
 
-// ---------------------------------------------------------------- plate
+// ───────────────────────────────────────────────── plate
 
-function SheetPlate({
-  sheet, dxfFileId, onOpen,
-}: { sheet: SheetRender; dxfFileId: string; onOpen: () => void }) {
+function SheetPlate({ sheet, dxfFileId, onOpen }: { sheet: SheetRender; dxfFileId: string; onOpen: () => void }) {
   const src = `/api/renders/${dxfFileId}/${encodeURIComponent(sheet.filename)}`;
   const [imgError, setImgError] = useState(false);
   const plateCode = `${TYPE_PLATE_PREFIX[sheet.type] || 'DR'}.${String(sheet.sheet_num).padStart(2, '0')}`;
-  const tint = TYPE_TINTS[sheet.type] || TYPE_TINTS.unclassified;
+  const tone = TYPE_TONES[sheet.type] || 'neutral';
 
   return (
     <button
       onClick={onOpen}
-      className={[
-        'group text-right block w-full',
-        'bg-paper-50 border border-ink-300/12 shadow-plate',
-        'transition-all duration-200 ease-out',
-        'hover:shadow-plate-hover hover:-translate-y-0.5 hover:border-terra-500/30',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-terra-500/40',
-      ].join(' ')}
+      className={cn(
+        'group text-start block w-full overflow-hidden',
+        'bg-surface border border-border rounded-md shadow-xs',
+        'transition-all duration-base',
+        'hover:shadow-md hover:-translate-y-0.5 hover:border-brand/40',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2',
+      )}
     >
-      {/* top metadata strip */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-ink-300/10 bg-paper-100/60">
-        <span className="font-mono text-[10px] tracking-wider text-ink-100">
-          {plateCode}
-        </span>
-        <span
-          className={[
-            'inline-flex items-center px-1.5 py-0.5 text-[10px]',
-            'ring-1 rounded-sm font-medium tracking-wide',
-            tint,
-          ].join(' ')}
-        >
-          {TYPE_LABELS_HE[sheet.type] || sheet.type}
-        </span>
+      {/* metadata strip */}
+      <div className="flex items-center justify-between px-3 py-2 border-b border-border bg-surface-alt">
+        <span className="font-latin text-[10px] tracking-wider text-text-muted" dir="ltr">{plateCode}</span>
+        <Badge tone={tone} size="sm">{TYPE_LABELS_HE[sheet.type] || sheet.type}</Badge>
       </div>
 
-      {/* sheet preview canvas */}
-      <div className="relative aspect-[5/4] bg-white overflow-hidden border-b border-ink-300/10">
-        {/* Subtle grid pattern behind sheet, very faint */}
-        <div
-          className="absolute inset-0 opacity-[0.035] pointer-events-none"
-          style={{
-            backgroundImage:
-              'linear-gradient(to right, #14181F 1px, transparent 1px), linear-gradient(to bottom, #14181F 1px, transparent 1px)',
-            backgroundSize: '20px 20px',
-          }}
-        />
+      {/* canvas */}
+      <div className="relative aspect-[5/4] bg-white overflow-hidden border-b border-border">
         {!imgError ? (
-          <img
-            src={src}
-            alt={sheet.label_he}
-            loading="lazy"
-            className="absolute inset-0 w-full h-full object-contain p-3 transition-transform duration-300 group-hover:scale-[1.02]"
-            onError={() => setImgError(true)}
-          />
+          <img src={src} alt={sheet.label_he} loading="lazy"
+            className="absolute inset-0 w-full h-full object-contain p-3 transition-transform duration-slow group-hover:scale-[1.02]"
+            onError={() => setImgError(true)} />
         ) : (
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-ink-50">
-            <FileWarning className="w-6 h-6 mb-2 opacity-60" />
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-text-muted">
+            <FileWarning className="h-6 w-6 mb-2 opacity-60" />
             <span className="text-xs">לא ניתן להציג</span>
           </div>
         )}
-        {/* corner crop marks for the architectural plate feel */}
-        <CornerMark className="top-1.5 right-1.5" />
-        <CornerMark className="top-1.5 left-1.5 rotate-90" />
-        <CornerMark className="bottom-1.5 right-1.5 -rotate-90" />
-        <CornerMark className="bottom-1.5 left-1.5 rotate-180" />
       </div>
 
-      {/* footer caption */}
+      {/* footer */}
       <div className="px-3 py-3">
-        <div className="font-serif text-base text-ink-300 leading-snug truncate" title={sheet.label_he}>
+        <div className="text-base font-semibold text-text leading-snug truncate" title={sheet.label_he}>
           {sheet.label_he}
         </div>
-        <div className="mt-1 flex items-center justify-between font-mono text-[10px] text-ink-50">
-          <span className="tabular-nums">
-            {sheet.scale || '—'}
-          </span>
-          <span className="flex items-center gap-1 opacity-80" title="מקור (gemoetry + annotations)">
-            <Layers className="w-3 h-3" />
+        <div className="mt-1.5 flex items-center justify-between text-[11px] text-text-muted">
+          <span className="font-latin tabular-nums" dir="ltr">{sheet.scale || '—'}</span>
+          <span className="flex items-center gap-1 font-latin" dir="ltr" title="מקור">
+            <Layers className="h-3 w-3" />
             <span className="tabular-nums">
               {sheet.geo_viewport?.replace('VIEWPORT', 'V') || '—'}
-              {sheet.ann_viewport && ` + ${sheet.ann_viewport.replace('VIEWPORT', 'V')}`}
+              {sheet.ann_viewport && sheet.ann_viewport !== sheet.geo_viewport
+                ? ` + ${sheet.ann_viewport.replace('VIEWPORT', 'V')}` : ''}
             </span>
           </span>
         </div>
       </div>
 
-      {/* bottom hover accent */}
-      <div className="h-0.5 bg-terra-500 scale-x-0 group-hover:scale-x-100 origin-right transition-transform duration-200" />
+      {/* hover accent */}
+      <div className="h-0.5 bg-brand scale-x-0 group-hover:scale-x-100 origin-end transition-transform duration-base" />
     </button>
   );
 }
 
-function CornerMark({ className = '' }: { className?: string }) {
-  return (
-    <svg
-      width="10" height="10" viewBox="0 0 10 10"
-      className={`absolute text-ink-300/30 ${className}`}
-    >
-      <path d="M 0 5 L 0 0 L 5 0" fill="none" stroke="currentColor" strokeWidth="0.8" />
-    </svg>
-  );
-}
-
-// ---------------------------------------------------------------- lightbox
+// ───────────────────────────────────────────────── lightbox
 
 function SheetLightbox({
   dxfFileId, sheets, index, onIndexChange, onClose,
 }: {
-  dxfFileId: string;
-  sheets: SheetRender[];
-  index: number;
-  onIndexChange: (i: number) => void;
-  onClose: () => void;
+  dxfFileId: string; sheets: SheetRender[]; index: number;
+  onIndexChange: (i: number) => void; onClose: () => void;
 }) {
   const sheet = sheets[index];
   const src = `/api/renders/${dxfFileId}/${encodeURIComponent(sheet.filename)}`;
@@ -346,19 +266,13 @@ function SheetLightbox({
   const [isDragging, setIsDragging] = useState(false);
   const dragStart = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
 
-  // Reset transform when switching sheets
-  useEffect(() => {
-    setScale(1);
-    setPan({ x: 0, y: 0 });
-  }, [index]);
+  useEffect(() => { setScale(1); setPan({ x: 0, y: 0 }); }, [index]);
 
-  // Keyboard nav
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
-      // RTL: ArrowRight = previous, ArrowLeft = next
       if (e.key === 'ArrowRight') onIndexChange(Math.max(0, index - 1));
-      if (e.key === 'ArrowLeft') onIndexChange(Math.min(sheets.length - 1, index + 1));
+      if (e.key === 'ArrowLeft')  onIndexChange(Math.min(sheets.length - 1, index + 1));
       if (e.key === '+' || e.key === '=') setScale(s => Math.min(s * 1.25, 8));
       if (e.key === '-' || e.key === '_') setScale(s => Math.max(s / 1.25, 0.4));
       if (e.key === '0') { setScale(1); setPan({ x: 0, y: 0 }); }
@@ -376,7 +290,6 @@ function SheetLightbox({
     const delta = e.deltaY > 0 ? 0.9 : 1.1;
     setScale(s => Math.max(0.4, Math.min(8, s * delta)));
   };
-
   const onMouseDown = (e: React.MouseEvent) => {
     setIsDragging(true);
     dragStart.current = { x: e.clientX, y: e.clientY, panX: pan.x, panY: pan.y };
@@ -390,72 +303,49 @@ function SheetLightbox({
   };
   const onMouseUp = () => setIsDragging(false);
 
-  const tint = TYPE_TINTS[sheet.type] || TYPE_TINTS.unclassified;
+  const tone = TYPE_TONES[sheet.type] || 'neutral';
   const plateCode = `${TYPE_PLATE_PREFIX[sheet.type] || 'DR'}.${String(sheet.sheet_num).padStart(2, '0')}`;
 
   return (
     <div
       className="fixed inset-0 z-50 flex flex-col"
-      style={{
-        background:
-          'radial-gradient(ellipse at center, #1a2030 0%, #0a0e16 80%)',
-      }}
+      style={{ background: 'var(--color-overlay-bg)' }}
+      role="dialog"
+      aria-modal="true"
     >
-      {/* drafting-table grid overlay */}
-      <div
-        className="absolute inset-0 opacity-[0.06] pointer-events-none"
-        style={{
-          backgroundImage:
-            'linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)',
-          backgroundSize: '40px 40px',
-        }}
-      />
-
       {/* Top toolbar */}
-      <header className="relative z-10 flex items-center justify-between gap-4 px-5 py-3 bg-ink-300/40 backdrop-blur-md border-b border-white/5">
+      <header className="relative z-10 flex items-center justify-between gap-4 px-5 py-3 bg-black/40 backdrop-blur-md border-b border-white/5">
         <div className="flex items-center gap-3 min-w-0">
-          <span className="font-mono text-xs tracking-[0.22em] text-paper-300/80">
-            {plateCode}
-          </span>
+          <span className="font-latin text-xs tracking-[0.22em] text-white/70" dir="ltr">{plateCode}</span>
           <span className="h-4 w-px bg-white/15" />
-          <h3 className="font-serif text-lg sm:text-xl text-paper-50 truncate">
-            {sheet.label_he}
-          </h3>
-          <span
-            className={[
-              'inline-flex items-center px-1.5 py-0.5 text-[10px] ring-1 rounded-sm font-medium',
-              tint,
-            ].join(' ')}
-          >
-            {TYPE_LABELS_HE[sheet.type] || sheet.type}
-          </span>
+          <h3 className="text-lg sm:text-xl text-white font-semibold truncate">{sheet.label_he}</h3>
+          <Badge tone={tone} size="sm">{TYPE_LABELS_HE[sheet.type] || sheet.type}</Badge>
         </div>
 
         <div className="flex items-center gap-1">
-          {/* counter */}
-          <span className="hidden sm:inline-block font-mono text-[10px] text-paper-300/70 tabular-nums px-2">
+          <span className="hidden sm:inline-block text-[11px] text-white/60 font-latin tabular-nums px-2" dir="ltr">
             {String(index + 1).padStart(2, '0')} / {String(sheets.length).padStart(2, '0')}
           </span>
           <ToolbarButton onClick={() => setScale(s => Math.max(s / 1.25, 0.4))} label="הקטן">
-            <Minus className="w-4 h-4" />
+            <Minus className="h-4 w-4" />
           </ToolbarButton>
-          <span className="font-mono text-[10px] text-paper-300/70 tabular-nums w-12 text-center">
+          <span className="text-[11px] text-white/60 font-latin tabular-nums w-12 text-center" dir="ltr">
             {Math.round(scale * 100)}%
           </span>
           <ToolbarButton onClick={() => setScale(s => Math.min(s * 1.25, 8))} label="הגדל">
-            <Plus className="w-4 h-4" />
+            <Plus className="h-4 w-4" />
           </ToolbarButton>
           <ToolbarButton onClick={() => { setScale(1); setPan({ x: 0, y: 0 }); }} label="איפוס">
-            <RotateCcw className="w-4 h-4" />
+            <RotateCcw className="h-4 w-4" />
           </ToolbarButton>
           <span className="h-5 w-px bg-white/15 mx-1" />
           <ToolbarButton onClick={onClose} label="סגור">
-            <X className="w-4 h-4" />
+            <X className="h-4 w-4" />
           </ToolbarButton>
         </div>
       </header>
 
-      {/* Sheet stage */}
+      {/* Stage */}
       <div
         className="relative flex-1 overflow-hidden flex items-center justify-center select-none"
         onWheel={onWheel}
@@ -466,87 +356,79 @@ function SheetLightbox({
         style={{ cursor: isDragging ? 'grabbing' : scale > 1 ? 'grab' : 'default' }}
       >
         <div
-          className="bg-white shadow-sheet relative"
+          className="bg-white shadow-xl relative"
           style={{
             transform: `translate(${pan.x}px, ${pan.y}px) scale(${scale})`,
             transformOrigin: 'center',
-            transition: isDragging ? 'none' : 'transform 200ms ease-out',
+            transition: isDragging ? 'none' : 'transform 200ms cubic-bezier(0.4, 0, 0.2, 1)',
             width: 'min(92vw, 1200px)',
             maxHeight: '78vh',
             aspectRatio: '4/3',
           }}
         >
-          <img
-            src={src}
-            alt={sheet.label_he}
+          <img src={src} alt={sheet.label_he}
             className="absolute inset-0 w-full h-full object-contain pointer-events-none"
-            draggable={false}
-          />
+            draggable={false} />
         </div>
 
-        {/* Prev/next nav (RTL — right is back, left is forward) */}
-        <NavBtn className="right-3" onClick={() => onIndexChange(Math.max(0, index - 1))} disabled={index === 0}>
-          <ChevronRight className="w-5 h-5" />
+        {/* Prev/next (RTL) */}
+        <NavBtn className="end-3" onClick={() => onIndexChange(Math.max(0, index - 1))} disabled={index === 0} aria-label="הקודם">
+          <ChevronRight className="h-5 w-5" />
         </NavBtn>
-        <NavBtn className="left-3" onClick={() => onIndexChange(Math.min(sheets.length - 1, index + 1))} disabled={index === sheets.length - 1}>
-          <ChevronLeft className="w-5 h-5" />
+        <NavBtn className="start-3" onClick={() => onIndexChange(Math.min(sheets.length - 1, index + 1))} disabled={index === sheets.length - 1} aria-label="הבא">
+          <ChevronLeft className="h-5 w-5" />
         </NavBtn>
       </div>
 
-      {/* Bottom strip — sheet metadata */}
-      <footer className="relative z-10 px-5 py-2 bg-ink-300/40 backdrop-blur-md border-t border-white/5">
-        <div className="flex items-center justify-between text-[10px] text-paper-300/70 font-mono tracking-wider">
-          <div className="flex items-center gap-4">
-            <span>SCALE <span className="text-paper-50">{sheet.scale || '—'}</span></span>
-            <span>ENTITIES <span className="text-paper-50 tabular-nums">{sheet.entity_count.toLocaleString()}</span></span>
+      {/* Bottom strip */}
+      <footer className="relative z-10 px-5 py-2 bg-black/40 backdrop-blur-md border-t border-white/5">
+        <div className="flex items-center justify-between text-[11px] text-white/60 font-latin tracking-wider">
+          <div className="flex items-center gap-4" dir="ltr">
+            <span>SCALE <span className="text-white">{sheet.scale || '—'}</span></span>
+            <span>ENTITIES <span className="text-white tabular-nums">{sheet.entity_count.toLocaleString()}</span></span>
             <span className="hidden sm:inline">
-              SOURCE <span className="text-paper-50">
-                {sheet.geo_viewport || '—'}{sheet.ann_viewport ? ` + ${sheet.ann_viewport}` : ''}
+              SOURCE <span className="text-white">
+                {sheet.geo_viewport || '—'}{sheet.ann_viewport && sheet.ann_viewport !== sheet.geo_viewport ? ` + ${sheet.ann_viewport}` : ''}
               </span>
             </span>
           </div>
-          <div className="flex items-center gap-3">
-            <span>SCROLL לזום · גרור להזזה · ESC ליציאה</span>
-          </div>
+          <div className="hidden sm:block text-white/50">SCROLL לזום · גרור להזזה · ESC ליציאה</div>
         </div>
       </footer>
     </div>
   );
 }
 
-function ToolbarButton({
-  children, onClick, label,
-}: { children: React.ReactNode; onClick: () => void; label: string }) {
+function ToolbarButton({ children, onClick, label }: { children: React.ReactNode; onClick: () => void; label: string }) {
   return (
     <button
       onClick={onClick}
       title={label}
       aria-label={label}
-      className="p-1.5 text-paper-200 hover:text-paper-50 hover:bg-white/8 rounded-sm transition-colors"
+      className="p-1.5 text-white/70 hover:text-white hover:bg-white/10 rounded-md transition-colors duration-fast"
     >
       {children}
     </button>
   );
 }
 
-function NavBtn({
-  children, onClick, disabled, className = '',
-}: { children: React.ReactNode; onClick: () => void; disabled?: boolean; className?: string }) {
+function NavBtn({ children, onClick, disabled, className = '', ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
     <button
-      onClick={(e) => { e.stopPropagation(); onClick(); }}
+      onClick={(e) => { e.stopPropagation(); onClick?.(e); }}
       disabled={disabled}
-      className={[
+      className={cn(
         'absolute top-1/2 -translate-y-1/2 z-10',
-        'w-10 h-10 flex items-center justify-center',
-        'bg-ink-300/60 backdrop-blur text-paper-50',
+        'h-10 w-10 flex items-center justify-center',
+        'bg-black/60 backdrop-blur text-white',
         'border border-white/10 rounded-full',
-        'transition-all duration-150',
+        'transition-all duration-fast',
         disabled
           ? 'opacity-20 cursor-default'
-          : 'hover:bg-terra-500 hover:border-terra-500 hover:scale-110',
+          : 'hover:bg-brand hover:border-brand hover:scale-110',
         className,
-      ].join(' ')}
+      )}
+      {...props}
     >
       {children}
     </button>
