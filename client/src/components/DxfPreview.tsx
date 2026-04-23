@@ -200,7 +200,7 @@ function SheetPlate({ sheet, dxfFileId, onOpen }: { sheet: SheetRender; dxfFileI
     <button
       onClick={onOpen}
       className={cn(
-        'group text-right block w-full overflow-hidden',
+        'group text-start block w-full overflow-hidden',
         'bg-surface border border-border rounded-md shadow-xs',
         'transition-all duration-base',
         'hover:shadow-md hover:-translate-y-0.5 hover:border-brand/40',
@@ -308,8 +308,8 @@ function SheetLightbox({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col bg-ink-300"
-      style={{ background: 'radial-gradient(ellipse at center, #1a2030 0%, #0a0e16 80%)' }}
+      className="fixed inset-0 z-50 flex flex-col"
+      style={{ background: 'var(--color-overlay-bg)' }}
       role="dialog"
       aria-modal="true"
     >

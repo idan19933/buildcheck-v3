@@ -240,8 +240,8 @@ function AddonModal({ addon, onClose }: { addon: AddonInfo; onClose: () => void 
 
   return (
     <div
-      className="fixed inset-0 bg-ink-300/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 sm:p-8"
-      style={{ background: 'rgba(15, 23, 42, 0.4)' }}
+      className="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4 sm:p-8"
+      style={{ background: 'var(--color-modal-scrim)' }}
       onClick={onClose}
       role="dialog"
       aria-modal="true"

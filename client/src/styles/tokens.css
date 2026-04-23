@@ -26,6 +26,10 @@
   --color-text-soft:       #475569;
   --color-text-muted:      #94a3b8;
 
+  /* Lightbox / overlay surfaces — dark "drafting table" backdrop */
+  --color-overlay-bg:      radial-gradient(ellipse at center, #1a2030 0%, #0a0e16 80%);
+  --color-modal-scrim:     rgba(15, 23, 42, 0.4);
+
   /* Radius */
   --radius-xs: 4px;
   --radius-sm: 6px;
