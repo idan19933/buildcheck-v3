@@ -60,7 +60,7 @@ export default function AnalysisPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
-  if (error) return <div><BackLink /><ErrorState message={error} onRetry={loadAll} /></div>;
+  if (error) return <div><BackLink /><ErrorState technical={error} onRetry={loadAll} /></div>;
   if (!analysis) {
     return <div className="space-y-5"><SkeletonCard /><SkeletonCard /></div>;
   }
@@ -118,17 +118,19 @@ export default function AnalysisPage() {
       )}
 
       {failed && (
-        <Card className="mb-6 border-danger/30 bg-danger-soft">
-          <div className="flex items-start gap-3">
-            <XCircle className="h-5 w-5 text-danger mt-0.5 flex-shrink-0" />
-            <div>
-              <div className="font-semibold text-danger">הבדיקה נכשלה</div>
-              {analysis.errorMessage && (
-                <div className="text-sm text-text-soft mt-1 font-latin" dir="ltr">{analysis.errorMessage}</div>
-              )}
-            </div>
-          </div>
-        </Card>
+        <div className="mb-6">
+          <ErrorState
+            severity="server"
+            title="הבדיקה לא הסתיימה בהצלחה"
+            message="משהו השתבש בזמן הריצה. אפשר לנסות להפעיל את הבדיקה מחדש מתוך עמוד הפרויקט."
+            technical={analysis.errorMessage ?? undefined}
+            extra={
+              <Link to={`/projects/${analysis.projectId}`} className="text-sm text-brand hover:text-brand-dark font-medium">
+                ← חזרה לעמוד הפרויקט
+              </Link>
+            }
+          />
+        </div>
       )}
 
       {/* Sheet browser — shows previews early, swaps to AI sheets when ready */}

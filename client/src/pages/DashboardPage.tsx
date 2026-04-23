@@ -80,7 +80,7 @@ export default function DashboardPage() {
           {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
         </div>
       ) : error ? (
-        <ErrorState message={error} onRetry={load} />
+        <ErrorState technical={error} onRetry={load} />
       ) : projects.length === 0 ? (
         <EmptyState
           icon={<FolderOpen className="h-8 w-8" />}

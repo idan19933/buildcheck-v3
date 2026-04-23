@@ -119,7 +119,7 @@ export default function AdminPage() {
       {loading ? (
         <SkeletonCard />
       ) : error ? (
-        <ErrorState message={error} onRetry={load} />
+        <ErrorState technical={error} onRetry={load} />
       ) : users.length === 0 ? (
         <EmptyState icon={<Users className="h-8 w-8" />} title="אין משתמשים" />
       ) : (
