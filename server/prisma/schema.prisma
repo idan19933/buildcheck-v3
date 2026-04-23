@@ -151,7 +151,8 @@ model Analysis {
   coreResults      Json?
   summary          String?
 
-  addonRuns        AddonRun[]
+  addonRuns          AddonRun[]
+  classificationLogs ClassificationLog[]
 
   errorMessage     String?
   startedAt        DateTime?
@@ -161,6 +162,27 @@ model Analysis {
   chatMessages     ChatMessage[]
 
   @@index([projectId])
+}
+
+// ==================== SEMANTIC CLASSIFICATION ====================
+// One row per analysis run, capturing how the text-classifier coverage
+// trends over time. Used to detect vocabulary drift / new doc types.
+model ClassificationLog {
+  id                       String   @id @default(uuid())
+  analysisId               String
+  analysis                 Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+
+  totalTexts               Int
+  deterministicClassified  Int       // canonical_exact + alias hits
+  numericClassified        Int
+  noiseClassified          Int
+  fuzzyClassified          Int
+  unclassifiedCount        Int
+
+  vocabularyVersion        String
+  createdAt                DateTime @default(now())
+
+  @@index([analysisId])
 }
 
 enum AnalysisStatus {

@@ -9,6 +9,7 @@ const EXTRACTOR = path.resolve(__dirname, '../../python/dxf_viewport_extractor.p
 const RENDERER = path.resolve(__dirname, '../../python/dxf_render.py');
 const SHEET_RENDERER = path.resolve(__dirname, '../../python/dxf_sheet_renderer.py');
 const PREVIEW_RENDERER = path.resolve(__dirname, '../../python/dxf_preview_renderer.py');
+const SEMANTIC_CLASSIFIER = path.resolve(__dirname, '../../python/semantic_classify.py');
 
 export interface ViewportClassification {
   type: string;
@@ -98,6 +99,56 @@ export interface PreviewResult {
   preview_count: number;
   previews: PreviewSheet[];
   output_dir: string;
+}
+
+// ────────────────────────────────────────────── semantic classifier ──
+
+export interface SemanticClassification {
+  match_type: 'canonical_exact' | 'alias' | 'numeric_pattern' | 'noise' | 'fuzzy' | 'unclassified';
+  category: string | null;
+  key: string | null;
+  canonical_he: string | null;
+  confidence: number;
+  matched_alias?: string | null;
+  edit_distance?: number | null;
+}
+
+export interface ClassifiedTextRecord {
+  block: string;
+  raw: string;
+  decoded: string;
+  position: { x: number; y: number };
+  height: number;
+  layer: string;
+  classification: SemanticClassification;
+}
+
+export interface SemanticSummary {
+  total: number;
+  vocabulary_version: string;
+  by_match_type: Record<string, number>;
+  by_category: Record<string, number>;
+  unclassified_count: number;
+  high_confidence_semantic_count: number;
+}
+
+/**
+ * Three-layer semantic classification of every TEXT/MTEXT in the DXF.
+ * Writes per-entity records to `outJsonPath`; resolves with the summary
+ * the Python script prints to stdout.
+ */
+export async function classifyDxfTexts(
+  dxfPath: string,
+  outJsonPath: string,
+): Promise<SemanticSummary> {
+  const { stdout } = await execFileAsync(
+    PYTHON_BIN,
+    [SEMANTIC_CLASSIFIER, dxfPath, outJsonPath],
+    { maxBuffer: 100 * 1024 * 1024, env: { ...process.env, PYTHONIOENCODING: 'utf-8' } },
+  );
+  const parsed = JSON.parse(stdout.trim());
+  if (parsed.error) throw new Error(`semantic classify failed: ${parsed.error}`);
+  return parsed as SemanticSummary;
 }
 
 /**
