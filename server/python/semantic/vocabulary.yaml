@@ -1,0 +1,364 @@
+# Controlled vocabulary for Israeli residential permit DXFs.
+# Every term reads ONLY post-decode (after \U+XXXX escapes are resolved + SHX
+# stroke-Latin is mapped back to Hebrew where applicable). The classifier
+# matches against `canonical_he` (highest weight), then `aliases`.
+#
+# Keep entries SHORT — one-word or short-phrase Hebrew terms only.
+# Long sentences belong in the LLM-review queue, not here.
+#
+# WHEN ADDING ENTRIES:
+#   1. Bump meta.version (semver patch).
+#   2. Update meta.updated_at (ISO date).
+#   3. Run unit + integration tests.
+#   4. Re-run the classifier against committed reference DXFs and confirm
+#      no regressions in the unclassified count.
+
+meta:
+  version: "1.0.0"
+  updated_at: "2026-04-23"
+  language: "he"
+  scope: "Israeli residential permit DXFs (תכניות בנייה)"
+  notes: "Aliases include common spelling variants, abbreviations, and
+    the punctuation styles architects use ('ממ\"ד', 'ממד', 'ממ.ד')."
+
+# ────────────────────────────────────────────────── ROOMS / SPACES ──
+# Every interior room a residential floor plan can label. The canonical
+# form is what shows up in a clean DXF; aliases cover handwriting-style
+# variants the classifier should still match.
+rooms:
+  - key: kitchen
+    canonical_he: "מטבח"
+    aliases: ["מטבחון", "פינת מטבח"]
+  - key: living_room
+    canonical_he: "סלון"
+    aliases: ["סלון אורחים", "ח. דיור", "חדר דיור", "דיור"]
+  - key: dining
+    canonical_he: "פינת אוכל"
+    aliases: ["פ. אוכל", "אוכל", "חדר אוכל"]
+  - key: master_bedroom
+    canonical_he: "ח. הורים"
+    aliases: ["חדר הורים", "ח.הורים", "הורים"]
+  - key: bedroom
+    canonical_he: "ח. שינה"
+    aliases: ["חדר שינה", "ח.שינה", "שינה", "ח. שינה 1", "ח. שינה 2",
+              "חדר ילדים", "חדר ילדה", "חדר ילד"]
+  - key: bathroom_main
+    canonical_he: "אמבטיה"
+    aliases: ["חדר אמבטיה", "אמבטיה הורים", "אמבטיה ילדים"]
+  - key: shower_room
+    canonical_he: "מקלחת"
+    aliases: ["חדר מקלחת", "מקלחון"]
+  - key: toilet
+    canonical_he: "שירותים"
+    aliases: ["שרותים", "שירותי אורחים", "ש.אורחים"]
+  - key: laundry
+    canonical_he: "כביסה"
+    aliases: ["חדר כביסה", "מסתור כביסה", "מסתור"]
+  - key: office_room
+    canonical_he: "ח. עבודה"
+    aliases: ["חדר עבודה", "ח.עבודה", "פ. עבודה", "עבודה"]
+  - key: closet_room
+    canonical_he: "ח. ארונות"
+    aliases: ["חדר ארונות", "ארונות", "וולק-אין"]
+  - key: storage
+    canonical_he: "מחסן"
+    aliases: ["חדר מחסן", "מ. אחסון", "אחסון"]
+  - key: entrance_hall
+    canonical_he: "מבואה"
+    aliases: ["כניסה", "פרוזדור כניסה"]
+  - key: hallway
+    canonical_he: "מסדרון"
+    aliases: ["פרוזדור", "מעבר"]
+  - key: stairs
+    canonical_he: "מדרגות"
+    aliases: ["חדר מדרגות", "מ. מדרגות"]
+  - key: balcony
+    canonical_he: "מרפסת"
+    aliases: ["מרפסת לא מקורה", "מרפסת מקורה", "מרפסת שירות",
+              "מרפסת שמש", "מרפסת לא"]
+  - key: pergola
+    canonical_he: "פרגולה"
+    aliases: ["פרגולה קלה", "פרגולה מאלומיניום", "פרגולת עץ"]
+  - key: safe_room
+    canonical_he: 'ממ"ד'
+    aliases: ["ממד", "ממ.ד", "מרחב מוגן", "מרחב מוגן דירתי"]
+  - key: covered_parking
+    canonical_he: "חנייה מקורה"
+    aliases: ["חניה מקורה", "חניייה מקורה", "מבנה חנייה"]
+  - key: parking_uncovered
+    canonical_he: "חנייה"
+    aliases: ["חניה", "חניייה", "חניית רכב"]
+  - key: garden
+    canonical_he: "גינה"
+    aliases: ["גן", "חצר אחורית"]
+  - key: patio
+    canonical_he: "חצר"
+    aliases: ["חצר פתוחה", "חצר אנגלית"]
+  - key: utility_closet
+    canonical_he: "מסתור מייבש"
+    aliases: ["שרוול מייבש", "מסתור צנרת"]
+
+# ────────────────────────────────────────────────── BOUNDARIES & ZONING ──
+# Plot edges, building lines, neighbour lots, setback markers. The classifier
+# tags these so the extractor can pair them with measured distances later.
+boundaries:
+  - key: plot_boundary
+    canonical_he: "גבול מגרש"
+    aliases: ["גבול המגרש", "קו מגרש"]
+  - key: building_line
+    canonical_he: "קו בניין"
+    aliases: ["ק. בניין", "קוו בניין", "קו בנין"]
+  - key: neighbour_plot
+    canonical_he: "מגרש שכן"
+    aliases: ["שכן מגרש", "ש. מגרש", "גבול שכן"]
+  - key: lot_entrance
+    canonical_he: "כניסה למגרש"
+    aliases: ["כניסה לחצר", "פתח כניסה"]
+  - key: street
+    canonical_he: "רחוב"
+    aliases: ["כביש", "דרך"]
+  - key: public_open_space
+    canonical_he: 'שצ"פ'
+    aliases: ["שצפ", "שטח ציבורי פתוח", "שב\"צ", "שבצ"]
+  - key: built_parapet
+    canonical_he: "מעקה בנוי"
+    aliases: ["מעקה בטון", "מעקה אבן"]
+  - key: light_railing
+    canonical_he: "מעקה קל"
+    aliases: ["מעקה אלומיניום", "מעקה זכוכית", "מעקה מתכת"]
+  - key: existing_fence
+    canonical_he: "חומה קיימת"
+    aliases: ["גדר קיימת", "ק. חומה"]
+  - key: new_fence
+    canonical_he: "גדר חדשה"
+    aliases: ["חומה חדשה", "גדר מתוכננת"]
+  - key: retaining_wall
+    canonical_he: "קיר תומך"
+    aliases: ["קיר ת.", "ק.תומך"]
+  - key: neighbour_grade
+    canonical_he: "מפלס שכן"
+    aliases: ["מפלס שכן מגרש", "פני שכן"]
+
+# ────────────────────────────────────────────────── CONSTRUCTION ELEMENTS ──
+# Built features that show up as labels (not their dimensions, which are
+# numeric and handled by the NUMERIC_PATTERN layer).
+construction_elements:
+  - key: concrete_canopy
+    canonical_he: "גגון מבטון"
+    aliases: ["גגון בטון", "גגון", "סוכך בטון"]
+  - key: light_canopy
+    canonical_he: "גגון קל"
+    aliases: ["סוכך מתכת", "גגון אלומיניום"]
+  - key: wall_existing
+    canonical_he: "קיר קיים"
+    aliases: ["ק. קיים", "קיר קיים להריסה"]
+  - key: wall_new
+    canonical_he: "קיר חדש"
+    aliases: ["ק. חדש", "קיר מתוכנן"]
+  - key: pillar
+    canonical_he: "עמוד"
+    aliases: ["ע.", "עמוד בטון"]
+  - key: column
+    canonical_he: "עמוד תמיכה"
+    aliases: ["ע. תמיכה"]
+  - key: beam
+    canonical_he: "קורה"
+    aliases: ["ק.", "קורת בטון"]
+  - key: roof_flat
+    canonical_he: "גג שטוח"
+    aliases: ["גג בטון", "גג בטון שטוח"]
+  - key: roof_pitched
+    canonical_he: "גג רעפים"
+    aliases: ["גג משופע", "גג רעפים אדומים"]
+  - key: skylight
+    canonical_he: "צוהר גג"
+    aliases: ["חלון גג", "פתח אור"]
+  - key: drain_pipe
+    canonical_he: "מרזב"
+    aliases: ["צינור ניקוז", "מרזב גג"]
+  - key: gas_line
+    canonical_he: "צנרת גז"
+    aliases: ["צנרת גז בישול", "צנרת PEX"]
+  - key: stairs_external
+    canonical_he: "מדרגות חיצוניות"
+    aliases: ["מדרגות גישה"]
+  - key: ramp
+    canonical_he: "רמפה"
+    aliases: ["רמפת גישה", "רמפה לנכים"]
+
+# ────────────────────────────────────────────────── CHANGE ANNOTATIONS ──
+# Renovations / additions: explicit verbs the architect uses to mark what's
+# new vs demolished vs modified. Critical for permit review of additions.
+changes:
+  - key: window_demolish
+    canonical_he: "הריסת חלון"
+    aliases: ["חלון להריסה", "חלון להסרה"]
+  - key: window_close
+    canonical_he: "סגירת חלון"
+    aliases: ["סתימת חלון"]
+  - key: window_open
+    canonical_he: "פתיחת חלון"
+    aliases: ["פתיחה לחלון חדש"]
+  - key: window_enlarge
+    canonical_he: "הגדלת חלון"
+    aliases: ["הרחבת חלון"]
+  - key: door_demolish
+    canonical_he: "הריסת דלת"
+    aliases: ["דלת להריסה"]
+  - key: door_close
+    canonical_he: "סגירת דלת"
+    aliases: ["סתימת דלת"]
+  - key: door_open
+    canonical_he: "פתיחת דלת"
+    aliases: ["פתח דלת חדש"]
+  - key: wall_demolish
+    canonical_he: "קיר להריסה"
+    aliases: ["הריסת קיר", "ק. להריסה"]
+  - key: addition_new
+    canonical_he: "תוספת בנייה"
+    aliases: ["תוספת חדשה", "ת. בנייה"]
+  - key: existing_to_demolish
+    canonical_he: "קיים להריסה"
+    aliases: ["להריסה", "מבנה להריסה"]
+  - key: existing_keep
+    canonical_he: "קיים לשימור"
+    aliases: ["קיים", "ק. לשימור"]
+  - key: rolling_shutter
+    canonical_he: "תריס גלילה"
+    aliases: ["תריס חשמלי", "ת. גלילה"]
+
+# ────────────────────────────────────────────────── SHEET / TITLE LABELS ──
+# Names of sheets/views as they appear inside the drawing OR the index page.
+# Different from the sheet TYPE which the classifier infers from content.
+sheet_labels:
+  - key: ground_floor
+    canonical_he: "קומת קרקע"
+    aliases: ["קרקע", "תוכנית קרקע", "תכנית קרקע"]
+  - key: first_floor
+    canonical_he: "קומה א'"
+    aliases: ["קומה א", "ק. א'", "תוכנית קומה א"]
+  - key: second_floor
+    canonical_he: "קומה ב'"
+    aliases: ["קומה ב", "ק. ב'"]
+  - key: basement
+    canonical_he: "מרתף"
+    aliases: ["קומת מרתף", "ק. מרתף"]
+  - key: roof_plan
+    canonical_he: "תוכנית גג"
+    aliases: ["תכנית גג", "גג"]
+  - key: site_plan
+    canonical_he: "תכנית העמדה"
+    aliases: ["תוכנית העמדה", "העמדה"]
+  - key: development_plan
+    canonical_he: "תכנית פיתוח"
+    aliases: ["תוכנית פיתוח", "פיתוח"]
+  - key: index_page
+    canonical_he: "תיק מידע"
+    aliases: ["תוכן עניינים", "אינדקס", "תרשים שערים"]
+  - key: survey
+    canonical_he: "מדידה"
+    aliases: ["תשריט מדידה", "סקר טופוגרפי"]
+  - key: section
+    canonical_he: "חתך"
+    aliases: ["חתך 1-1", "חתך 2-2", "חתך 3-3", "חתך 4-4"]
+  - key: elevation
+    canonical_he: "חזית"
+    aliases: ["חזית צפונית", "חזית דרומית", "חזית מזרחית", "חזית מערבית"]
+  - key: parking_section
+    canonical_he: "חתך חנייה"
+    aliases: ["חתך חניה", "נספח חנייה"]
+  - key: area_calculation
+    canonical_he: "חישוב שטחים"
+    aliases: ["טבלת שטחים", "חישוב שטח"]
+  - key: neighbourhood_diagram
+    canonical_he: "תרשים סביבה"
+    aliases: ["סביבה", "תרשים סביביה"]
+
+# ────────────────────────────────────────────────── CODE / REGULATION REFS ──
+# Section markers and standard references that show up as labels.
+code_references:
+  - key: tav_a_plan
+    canonical_he: 'תב"ע'
+    aliases: ["תבע", "תב.ע"]
+  - key: clause_marker
+    canonical_he: "סעיף"
+    aliases: ["§", "ס."]
+  - key: israeli_standard
+    canonical_he: "תקן ישראלי"
+    aliases: ["ת.י.", "ת״י", "ת'י"]
+  - key: regulation
+    canonical_he: "תקנון"
+    aliases: ["ת.", "תק."]
+
+# ────────────────────────────────────────────────── FINISHES ──
+# Material/finish labels that appear on facades and roofs.
+finishes:
+  - key: plaster_colored
+    canonical_he: "שליכט צבעוני"
+    aliases: ["בגמר שליכט צבעוני", "גמר שליכט צבעוני", "שליכט"]
+  - key: plaster_smooth
+    canonical_he: "טיח התזה"
+    aliases: ["התזה", "טיח חלק"]
+  - key: stone_natural
+    canonical_he: "אבן טבעית"
+    aliases: ["אבן", "ציפוי אבן", "חיפוי אבן"]
+  - key: stone_quarry
+    canonical_he: "אבן ניסור"
+    aliases: ["אבן מנוסרת"]
+  - key: brick_clay
+    canonical_he: "לבני יציקה"
+    aliases: ["לבני שריפה", "לבנים אדומות"]
+  - key: brick_silicate
+    canonical_he: "לבני סיליקט"
+    aliases: ["סיליקט"]
+  - key: aluminum_cladding
+    canonical_he: "ציפוי אלומיניום"
+    aliases: ["חיפוי אלומיניום", "אלומיניום"]
+  - key: standard_aperture
+    canonical_he: "פתחי אור לפי תקן"
+    aliases: ["פתחי אור", "תקן פתחי אור"]
+
+# ────────────────────────────────────────────────── DIMENSION MODIFIERS ──
+# Words that modify or qualify dimensions — should be classified semantically
+# but NOT treated as standalone numeric values.
+dimension_modifiers:
+  - key: scale_label
+    canonical_he: "קנ\"מ"
+    aliases: ["קנמ", "קנה מידה", "קנ.מ"]
+  - key: density_label
+    canonical_he: "צפיפות לפי תקן"
+    aliases: ["צפיפות"]
+  - key: direction_north
+    canonical_he: "צפון"
+    aliases: ["צפ.", "צפ"]
+  - key: direction_south
+    canonical_he: "דרום"
+    aliases: ["דר.", "דר"]
+  - key: direction_east
+    canonical_he: "מזרח"
+    aliases: ["מז.", "מז"]
+  - key: direction_west
+    canonical_he: "מערב"
+    aliases: ["מע.", "מע"]
+  - key: floor_grade_label
+    canonical_he: "רום"
+    aliases: ["מפלס", "גובה"]
+  - key: ground_zero
+    canonical_he: 'מפלס ±0.00'
+    aliases: ["±0.00", "0.00"]
+
+# ────────────────────────────────────────────────── NOISE ──
+# Patterns that look like text but carry zero semantic content. The
+# classifier short-circuits to NOISE when it sees these so they don't
+# eat fuzzy-match budget. (Mojibake itself is detected algorithmically,
+# not by enumeration — these are the literal short strings worth listing.)
+noise:
+  - key: empty_marker
+    canonical_he: "—"
+    aliases: ["-", "·", "•", "*", "."]
+  - key: number_only_dot
+    canonical_he: "."
+    aliases: [".."]
+  - key: page_break
+    canonical_he: ""
+    aliases: ["___"]

@@ -1,6 +1,6 @@
 import path from 'path';
 import { prisma } from '../lib/prisma';
-import { extractDxfViewports, renderDxfPreviews } from './dxf.service';
+import { classifyDxfTexts, extractDxfViewports, renderDxfPreviews } from './dxf.service';
 import { processDxf } from './dxf-pipeline.service';
 import { extractPdfText, parseTavaRequirements, TavaRequirement } from './pdf-extract.service';
 import { runCoreComplianceAgent } from './core-compliance-agent';
@@ -67,7 +67,17 @@ export async function runCoreAnalysis(analysisId: string): Promise<void> {
       }
     };
 
-    const [viewportData, pipelineSettled] = await Promise.all([
+    // Semantic text classification — runs in parallel with extract + AI pipeline.
+    // Output (classified_texts.json) lives next to the renders dir so the
+    // codegen prompt can ingest it. Failure here is non-fatal: we just won't
+    // have the pre-classified summary to feed to Claude.
+    const semanticOutPath = path.join(renderRoot, '_pipeline_meta', 'classified_texts.json');
+    const semanticPromise = classifyDxfTexts(dxfPath, semanticOutPath).then(
+      (s) => ({ ok: true as const, value: s }),
+      (e) => ({ ok: false as const, error: e instanceof Error ? e.message : String(e) }),
+    );
+
+    const [viewportData, pipelineSettled, semanticSettled] = await Promise.all([
       extractDxfViewports(dxfPath),
       processDxf(dxfPath, renderRoot, {
         onProgress: (step, detail) =>
@@ -77,7 +87,37 @@ export async function runCoreAnalysis(analysisId: string): Promise<void> {
         (r) => ({ ok: true as const, value: r }),
         (e) => ({ ok: false as const, error: e instanceof Error ? e.message : String(e) }),
       ),
+      semanticPromise,
     ]);
+
+    // Persist the classification log if we got a summary back.
+    if (semanticSettled.ok) {
+      const s = semanticSettled.value;
+      try {
+        await prisma.classificationLog.create({
+          data: {
+            analysisId,
+            totalTexts: s.total,
+            deterministicClassified:
+              (s.by_match_type.canonical_exact ?? 0) + (s.by_match_type.alias ?? 0),
+            numericClassified: s.by_match_type.numeric_pattern ?? 0,
+            noiseClassified:   s.by_match_type.noise ?? 0,
+            fuzzyClassified:   s.by_match_type.fuzzy ?? 0,
+            unclassifiedCount: s.unclassified_count,
+            vocabularyVersion: s.vocabulary_version,
+          },
+        });
+        console.log(
+          `[semantic:${dxfFileId.slice(0, 8)}] ${s.total} texts; ` +
+          `${s.high_confidence_semantic_count} semantic; ${s.unclassified_count} unclassified ` +
+          `(vocab v${s.vocabulary_version})`,
+        );
+      } catch (e) {
+        console.error(`[semantic:${dxfFileId.slice(0, 8)}] log persist failed:`, e);
+      }
+    } else {
+      console.error(`[semantic:${dxfFileId.slice(0, 8)}] failed: ${semanticSettled.error}`);
+    }
 
     let renderedSheets: object | undefined;
     if (pipelineSettled.ok) {
