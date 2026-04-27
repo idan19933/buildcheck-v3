@@ -1,0 +1,193 @@
+{
+  "label": "current_main",
+  "run_index": 2,
+  "analysis_id": "f20e3a95-21ff-43e1-851c-983cbd4766b1",
+  "status": "COMPLETED",
+  "error": null,
+  "score": 0,
+  "status_counts": {
+    "pass": 0,
+    "fail": 0,
+    "warning": 1,
+    "cannot_check": 24
+  },
+  "per_requirement": [
+    {
+      "requirement": "גודל מגרש מינימלי לבית חד משפחתי",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.1",
+      "measured_value": null,
+      "notes": "לא נמצאו נתוני שטח מגרש בקובץ DXF. אין closed polygon areas עם שטחי מגרש מחושבים."
+    },
+    {
+      "requirement": "גודל מגרש מינימלי לבית דו משפחתי",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.1",
+      "measured_value": null,
+      "notes": "לא נמצאו נתוני שטח מגרש בקובץ DXF. אין closed polygon areas עם שטחי מגרש מחושבים."
+    },
+    {
+      "requirement": "שטח בנייה מירבי לבית חד משפחתי",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.4.א",
+      "measured_value": null,
+      "notes": "לא נמצא חישוב שטחים (area calculation) בקובץ DXF. אין closed polygon areas עם שטחי בנייה מחושבים."
+    },
+    {
+      "requirement": "שטח מירבי בקומת קרקע לבית חד משפחתי",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.4.א",
+      "measured_value": null,
+      "notes": "לא נמצא חישוב שטחים לקומת קרקע בקובץ DXF."
+    },
+    {
+      "requirement": "שטח מרתף מירבי לבית חד משפחתי",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.4.א",
+      "measured_value": null,
+      "notes": "לא נמצא חישוב שטחי מרתף בקובץ DXF."
+    },
+    {
+      "requirement": "שטח בנייה מירבי לבית דו משפחתי ליחידה",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.4.ב",
+      "measured_value": null,
+      "notes": "לא ניתן לקבוע אם מדובר בבית דו-משפחתי. לא נמצא חישוב שטחים."
+    },
+    {
+      "requirement": "שטח מירבי בקומת קרקע לבית דו משפחתי ליחידה",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.4.ב",
+      "measured_value": null,
+      "notes": "לא ניתן לקבוע אם מדובר בבית דו-משפחתי. לא נמצא חישוב שטחים."
+    },
+    {
+      "requirement": "שטח מרתף מירבי לבית דו משפחתי ליחידה",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.4.ב",
+      "measured_value": null,
+      "notes": "לא ניתן לקבוע אם מדובר בבית דו-משפחתי. לא נמצא חישוב שטחי מרתף."
+    },
+    {
+      "requirement": "שטח מירבי לשימוש בחלל גג רעפים",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.4.ה",
+      "measured_value": null,
+      "notes": "נמצאה תווית roof_plan ב-VIEWPORT1, אך לא נמצא חישוב שטח לחלל גג."
+    },
+    {
+      "requirement": "מספר קומות מירבי באזור מגורים א",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.5",
+      "measured_value": null,
+      "notes": "לא נמצאו חתכים (sections) בקובץ DXF לספירת קומות. נמצאו רומים יחסיים אך לא ניתן לגזור מהם מספר קומות."
+    },
+    {
+      "requirement": "גובה בנייה מירבי לגג שטוח כולל מעקה",
+      "status": "WARNING",
+      "source": "סעיף 2.5",
+      "measured_value": 4.64,
+      "notes": "נמצאו רומים יחסיים עד 4.60 מ'. הטווח הכולל הוא 4.64 מ' (מ-0.04- עד 4.60). ייתכן שזה גובה קומה אחת בלבד ולא גובה הבניין המלא. נדרש חתך עם רומים אבסולוטיים לאימות."
+    },
+    {
+      "requirement": "גובה בנייה מירבי לגג רעפים או גג שטוח עם מבנה יציאה",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.5",
+      "measured_value": null,
+      "notes": "לא נמצא חתך עם גובה בניין מלא. הרומים היחסיים שנמצאו (עד 4.60 מ') אינם מספיקים לקביעת גובה הבניין הכולל."
+    },
+    {
+      "requirement": "גובה מירבי למבנה יציאה לגג",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.5",
+      "measured_value": null,
+      "notes": "לא נמצא מבנה יציאה לגג מזוהה בתוכניות."
+    },
+    {
+      "requirement": "שטח מירבי למבנה יציאה לגג",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.5",
+      "measured_value": null,
+      "notes": "לא נמצא מבנה יציאה לגג מזוהה בתוכניות."
+    },
+    {
+      "requirement": "קו בניין קדמי (חזית משיקה לדרך)",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.5",
+      "measured_value": null,
+      "notes": "לא נמצאו קווי בניין מזוהים (setbacks array ריק). לא נמצאו תוויות building_line או plot_boundary בסיווג הסמנטי."
+    },
+    {
+      "requirement": "קו בניין צדדי",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.5",
+      "measured_value": null,
+      "notes": "לא נמצאו קווי בניין מזוהים (setbacks array ריק)."
+    },
+    {
+      "requirement": "קו בניין אחורי",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.5",
+      "measured_value": null,
+      "notes": "לא נמצאו קווי בניין מזוהים (setbacks array ריק)."
+    },
+    {
+      "requirement": "הבלטת אלמנטים ארכיטקטוניים מעבר לקווי בניין",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.5.ג",
+      "measured_value": null,
+      "notes": "לא נמצאו נתוני הבלטות ארכיטקטוניות בקובץ DXF."
+    },
+    {
+      "requirement": "שטח מירבי לחניה מקורה/מבנה חניה ליחידה",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.6.א",
+      "measured_value": null,
+      "notes": "לא נמצאו נתוני חנייה בקובץ DXF (parking: null)."
+    },
+    {
+      "requirement": "שטח מירבי למחסן ליחידה",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.6.ב",
+      "measured_value": null,
+      "notes": "לא נמצאו נתוני מחסן בקובץ DXF."
+    },
+    {
+      "requirement": "שטח כולל מירבי למבני עזר",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.6.ב",
+      "measured_value": null,
+      "notes": "לא נמצאו נתוני מבני עזר בקובץ DXF."
+    },
+    {
+      "requirement": "גובה מירבי למבני עזר",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.6",
+      "measured_value": null,
+      "notes": "לא נמצאו נתוני מבני עזר בקובץ DXF."
+    },
+    {
+      "requirement": "גובה מירבי למסד",
+      "status": "CANNOT_CHECK",
+      "source": "הגדרות - מסד",
+      "measured_value": null,
+      "notes": "לא נמצאו נתוני מסד בקובץ DXF."
+    },
+    {
+      "requirement": "גובה מינימלי למעקה גג",
+      "status": "CANNOT_CHECK",
+      "source": "הגדרות - מעקה גג",
+      "measured_value": 1.05,
+      "notes": "נמצא רום 1.05 מ' במספר viewports (VIEWPORT7, VIEWPORT8, VIEWPORT9, VIEWPORT12) שעשוי להיות גובה מעקה, אך לא ניתן לאשר ללא תווית מזהה."
+    },
+    {
+      "requirement": "גובה מירבי למרתף",
+      "status": "CANNOT_CHECK",
+      "source": "הגדרות - מרתף",
+      "measured_value": null,
+      "notes": "לא נמצאו נתוני מרתף מזוהים בקובץ DXF."
+    }
+  ],
+  "duration_ms": 266546,
+  "timestamp": "2026-04-25T15:23:16.611Z"
+}

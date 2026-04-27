@@ -1,0 +1,41 @@
+{
+  "production_high_conf": {
+    "boundaries": 0,
+    "construction_elements": 1,
+    "changes": 0
+  },
+  "substring_scan": {
+    "boundaries": {
+      "logical": 0,
+      "visual_rtl": 25,
+      "by_word_logical": {},
+      "by_word_visual": {
+        "מגרש": 4,
+        "דרך": 2,
+        "חזית": 19
+      }
+    },
+    "construction_elements": {
+      "logical": 1,
+      "visual_rtl": 10,
+      "by_word_logical": {
+        "גג": 1
+      },
+      "by_word_visual": {
+        "עמוד": 3,
+        "קיר": 3,
+        "גג": 1,
+        "מדרגות": 3
+      }
+    },
+    "changes": {
+      "logical": 0,
+      "visual_rtl": 2,
+      "by_word_logical": {},
+      "by_word_visual": {
+        "להריסה": 1,
+        "חדש": 1
+      }
+    }
+  }
+}

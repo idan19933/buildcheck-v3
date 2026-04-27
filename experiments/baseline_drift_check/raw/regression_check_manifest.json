@@ -1,0 +1,18 @@
+{
+  "started_at": "2026-04-25T11:43:38.613Z",
+  "runs": [
+    "regression_check_pre_current_1.json",
+    "regression_check_post_current_1.json",
+    "regression_check_pre_softened_1.json",
+    "regression_check_post_softened_1.json",
+    "regression_check_pre_current_2.json",
+    "regression_check_post_current_2.json",
+    "regression_check_pre_softened_2.json",
+    "regression_check_post_softened_2.json",
+    "regression_check_pre_current_3.json",
+    "regression_check_post_current_3.json",
+    "regression_check_pre_softened_3.json",
+    "regression_check_post_softened_3.json"
+  ],
+  "finished_at": "2026-04-25T12:15:21.176Z"
+}

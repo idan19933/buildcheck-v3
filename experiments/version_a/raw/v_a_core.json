@@ -1,0 +1,252 @@
+[
+  {
+    "source": "סעיף 2.1",
+    "status": "CANNOT_CHECK",
+    "details": "לא נמצאו נתוני שטח מגרש בקובץ DXF. חסר: polygon סגור של גבולות המגרש או תווית שטח מגרש",
+    "category": "lot_size",
+    "dxfEvidence": "לא נמצא closed polygon areas עם שטחי מגרש",
+    "requirement": "גודל מגרש מינימלי לבית חד משפחתי",
+    "measuredValue": null,
+    "requiredValue": 375
+  },
+  {
+    "source": "סעיף 2.4.א",
+    "status": "CANNOT_CHECK",
+    "details": "לא נמצאו נתוני שטחי בנייה מחושבים בקובץ DXF. חסר: טבלת שטחים או closed polygon areas של קומות",
+    "category": "area",
+    "dxfEvidence": "closed polygon areas: none בכל הviewports",
+    "requirement": "שטח בנייה מירבי לבית חד משפחתי",
+    "measuredValue": null,
+    "requiredValue": 250
+  },
+  {
+    "source": "סעיף 2.4.א",
+    "status": "CANNOT_CHECK",
+    "details": "לא נמצאו נתוני שטח קומת קרקע. חסר: polygon סגור של קומת קרקע או תווית שטח",
+    "category": "area",
+    "dxfEvidence": "לא נמצא viewport עם תוכנית קומת קרקע מזוהה עם שטחים",
+    "requirement": "שטח מירבי בקומת קרקע לבית חד משפחתי",
+    "measuredValue": null,
+    "requiredValue": 180
+  },
+  {
+    "source": "סעיף 2.4.א",
+    "status": "CANNOT_CHECK",
+    "details": "לא נמצאו נתוני שטח מרתף. חסר: תוכנית מרתף עם שטח מחושב",
+    "category": "area",
+    "dxfEvidence": "לא זוהה viewport של מרתף עם closed polygon areas",
+    "requirement": "שטח מרתף מירבי לבית חד משפחתי",
+    "measuredValue": null,
+    "requiredValue": 80
+  },
+  {
+    "source": "סעיף 2.4.ה",
+    "status": "CANNOT_CHECK",
+    "details": "זוהה VIEWPORT1 כתוכנית גג (roof_plan) אך לא נמצא שטח מחושב לחלל גג",
+    "category": "area",
+    "dxfEvidence": "VIEWPORT1 מסווג כ-roof_plan, אך closed polygon areas: none",
+    "requirement": "שטח מירבי לשימוש בחלל גג רעפים",
+    "measuredValue": null,
+    "requiredValue": 40
+  },
+  {
+    "source": "סעיף 2.5",
+    "status": "CANNOT_CHECK",
+    "details": "לא נמצא מידע מפורש על מספר קומות. ניתן להסיק מחתכים אך לא זוהו חתכים בקובץ",
+    "category": "floors",
+    "dxfEvidence": "חתכים: לא נמצא ב-DXF",
+    "requirement": "מספר קומות מירבי באזור מגורים א",
+    "measuredValue": null,
+    "requiredValue": 2
+  },
+  {
+    "source": "סעיף 2.5",
+    "status": "WARNING",
+    "details": "נמצאו רומים יחסיים בטווח -0.04 עד 4.60 מ'. הפרש מקסימלי 4.64 מ' נמוך מ-8 מ', אך לא ברור אם זה גובה הבניין המלא או חלק ממנו",
+    "category": "height",
+    "dxfEvidence": "Relative elevations range: -0.04 to 4.60 (spread 4.64 m) ב-VIEWPORT4,7,8,9,10,11,12,13",
+    "requirement": "גובה בנייה מירבי לגג שטוח כולל מעקה",
+    "measuredValue": 4.64,
+    "requiredValue": 8
+  },
+  {
+    "source": "סעיף 2.5",
+    "status": "WARNING",
+    "details": "הפרש רומים יחסיים מקסימלי 4.64 מ' נמוך מ-9.5 מ'. נדרש אימות שזהו גובה הבניין המלא",
+    "category": "height",
+    "dxfEvidence": "Relative elevations spread: 4.64 m",
+    "requirement": "גובה בנייה מירבי לגג רעפים או גג שטוח עם מבנה יציאה",
+    "measuredValue": 4.64,
+    "requiredValue": 9.5
+  },
+  {
+    "source": "סעיף 2.5",
+    "status": "CANNOT_CHECK",
+    "details": "לא זוהה מבנה יציאה לגג בתוכניות",
+    "category": "height",
+    "dxfEvidence": "לא נמצאה תווית או שכבה של מבנה יציאה לגג",
+    "requirement": "גובה מירבי למבנה יציאה לגג",
+    "measuredValue": null,
+    "requiredValue": 2.5
+  },
+  {
+    "source": "סעיף 2.5",
+    "status": "CANNOT_CHECK",
+    "details": "לא זוהה מבנה יציאה לגג בתוכניות",
+    "category": "area",
+    "dxfEvidence": "לא נמצא polygon או תווית של מבנה יציאה לגג",
+    "requirement": "שטח מירבי למבנה יציאה לגג",
+    "measuredValue": null,
+    "requiredValue": 15
+  },
+  {
+    "source": "סעיף 2.5",
+    "status": "CANNOT_CHECK",
+    "details": "לא נמצאו נתוני קווי בניין מעובדים. מערך setbacks ריק",
+    "category": "setback",
+    "dxfEvidence": "קווי בניין (setbacks): []",
+    "requirement": "קו בניין קדמי (חזית משיקה לדרך)",
+    "measuredValue": null,
+    "requiredValue": 5
+  },
+  {
+    "source": "סעיף 2.5",
+    "status": "CANNOT_CHECK",
+    "details": "לא נמצאו נתוני קווי בניין צדדיים",
+    "category": "setback",
+    "dxfEvidence": "קווי בניין (setbacks): []",
+    "requirement": "קו בניין צדדי",
+    "measuredValue": null,
+    "requiredValue": 3
+  },
+  {
+    "source": "סעיף 2.5",
+    "status": "CANNOT_CHECK",
+    "details": "לא נמצאו נתוני קווי בניין אחוריים",
+    "category": "setback",
+    "dxfEvidence": "קווי בניין (setbacks): []",
+    "requirement": "קו בניין אחורי",
+    "measuredValue": null,
+    "requiredValue": 3
+  },
+  {
+    "source": "סעיף 2.5.ג",
+    "status": "CANNOT_CHECK",
+    "details": "לא ניתן לבדוק ללא נתוני קווי בניין וגיאומטריית הבלטות",
+    "category": "setback",
+    "dxfEvidence": "חסר מידע על הבלטות ארכיטקטוניות",
+    "requirement": "הבלטת אלמנטים ארכיטקטוניים מעבר לקווי בניין",
+    "measuredValue": null,
+    "requiredValue": 75
+  },
+  {
+    "source": "סעיף 2.6.א",
+    "status": "CANNOT_CHECK",
+    "details": "לא נמצאו נתוני חניה בקובץ",
+    "category": "parking",
+    "dxfEvidence": "חנייה: לא נמצא ב-DXF",
+    "requirement": "שטח מירבי לחניה מקורה/מבנה חניה ליחידה",
+    "measuredValue": null,
+    "requiredValue": 30
+  },
+  {
+    "source": "סעיף 2.6.ב",
+    "status": "CANNOT_CHECK",
+    "details": "לא זוהה מחסן בתוכניות",
+    "category": "area",
+    "dxfEvidence": "לא נמצאה תווית 'מחסן' בסיווג הסמנטי",
+    "requirement": "שטח מירבי למחסן ליחידה",
+    "measuredValue": null,
+    "requiredValue": 8
+  },
+  {
+    "source": "סעיף 2.6.ב",
+    "status": "CANNOT_CHECK",
+    "details": "לא זוהו מבני עזר בתוכניות",
+    "category": "area",
+    "dxfEvidence": "לא נמצאו תוויות מבני עזר",
+    "requirement": "שטח כולל מירבי למבני עזר",
+    "measuredValue": null,
+    "requiredValue": 38
+  },
+  {
+    "source": "סעיף 2.6",
+    "status": "CANNOT_CHECK",
+    "details": "לא זוהו מבני עזר בתוכניות",
+    "category": "height",
+    "dxfEvidence": "לא נמצאו חתכים או רומים של מבני עזר",
+    "requirement": "גובה מירבי למבני עזר",
+    "measuredValue": null,
+    "requiredValue": 2.2
+  },
+  {
+    "source": "הגדרות - מסד",
+    "status": "CANNOT_CHECK",
+    "details": "לא זוהה מסד בתוכניות או בחתכים",
+    "category": "height",
+    "dxfEvidence": "חתכים: לא נמצא ב-DXF",
+    "requirement": "גובה מירבי למסד",
+    "measuredValue": null,
+    "requiredValue": 1.5
+  },
+  {
+    "source": "הגדרות - מעקה גג",
+    "status": "PASS",
+    "details": "נמצא גובה 1.05 מ' ברומים יחסיים בחתכים - תואם לדרישת המינימום",
+    "category": "height",
+    "dxfEvidence": "VIEWPORT7,8: Heights include 1.05 (relative_height)",
+    "requirement": "גובה מינימלי למעקה גג",
+    "measuredValue": 1.05,
+    "requiredValue": 1.05
+  },
+  {
+    "source": "הגדרות - מעקה גג",
+    "status": "PASS",
+    "details": "גובה מעקה 1.05 מ' נמוך מהמקסימום המותר 1.4 מ'",
+    "category": "height",
+    "dxfEvidence": "VIEWPORT7,8: Heights include 1.05 (relative_height)",
+    "requirement": "גובה מירבי למעקה גג",
+    "measuredValue": 1.05,
+    "requiredValue": 1.4
+  },
+  {
+    "source": "הגדרות - מרתף",
+    "status": "CANNOT_CHECK",
+    "details": "לא זוהה מרתף בתוכניות או בחתכים",
+    "category": "height",
+    "dxfEvidence": "לא נמצאה תווית מרתף או רום שלילי משמעותי",
+    "requirement": "גובה מירבי למרתף",
+    "measuredValue": null,
+    "requiredValue": 2.5
+  },
+  {
+    "source": "הגדרות - מרתף",
+    "status": "CANNOT_CHECK",
+    "details": "לא זוהה מרתף בתוכניות",
+    "category": "height",
+    "dxfEvidence": "חסר מידע על מרתף",
+    "requirement": "בליטה מירבית של תקרת מרתף מפני הקרקע",
+    "measuredValue": null,
+    "requiredValue": 1.2
+  },
+  {
+    "source": "הגדרות - עליית גג",
+    "status": "CANNOT_CHECK",
+    "details": "לא נמצא חתך של עליית גג עם מידות גובה פנימי",
+    "category": "height",
+    "dxfEvidence": "VIEWPORT1 מזוהה כ-roof_plan אך ללא נתוני גובה פנימי",
+    "requirement": "גובה מינימלי לחישוב שטח בעליית גג",
+    "measuredValue": null,
+    "requiredValue": 1.8
+  },
+  {
+    "source": "בדיקת אלמנטים",
+    "status": "PASS",
+    "details": "זוהתה מרפסת (balcony) בתוכנית",
+    "category": "area",
+    "dxfEvidence": "Semantic Classification: balcony: 1 labels in viewports [VIEWPORT1]",
+    "requirement": "מרפסת זיזית - זוהתה",
+    "measuredValue": 1,
+    "requiredValue": null
+  }
+]

@@ -1,0 +1,193 @@
+{
+  "label": "old_commit_614dfc7",
+  "run_index": 4,
+  "analysis_id": "0d3c42f1-5b7a-4f4d-acae-6af205233df6",
+  "status": "COMPLETED",
+  "error": null,
+  "score": 80,
+  "status_counts": {
+    "pass": 4,
+    "fail": 0,
+    "warning": 1,
+    "cannot_check": 20
+  },
+  "per_requirement": [
+    {
+      "requirement": "גודל מגרש מינימלי לבית חד משפחתי",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.1",
+      "measured_value": null,
+      "notes": "לא נמצאו נתוני שטח מגרש בקובץ DXF. חסר: polygon סגור המייצג גבולות מגרש עם חישוב שטח."
+    },
+    {
+      "requirement": "שטח בנייה מירבי לבית חד משפחתי",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.4.א",
+      "measured_value": null,
+      "notes": "לא נמצאו נתוני שטחי בנייה מחושבים בקובץ DXF. חסר: טבלת שטחים או polygons סגורים עם חישוב שטח."
+    },
+    {
+      "requirement": "שטח מירבי בקומת קרקע לבית חד משפחתי",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.4.א",
+      "measured_value": null,
+      "notes": "לא נמצאו נתוני שטח קומת קרקע. חסר: חישוב שטחים לפי קומות."
+    },
+    {
+      "requirement": "שטח מרתף מירבי לבית חד משפחתי",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.4.א",
+      "measured_value": null,
+      "notes": "לא נמצאו נתוני שטח מרתף. חסר: זיהוי קומת מרתף וחישוב שטחה."
+    },
+    {
+      "requirement": "שטח מירבי לשימוש בחלל גג רעפים",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.4.ה",
+      "measured_value": null,
+      "notes": "לא נמצאו נתוני שטח עליית גג. חסר: זיהוי חלל גג וחישוב שטח."
+    },
+    {
+      "requirement": "מספר קומות מירבי באזור מגורים א",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.5",
+      "measured_value": null,
+      "notes": "לא נמצא מידע מפורש על מספר קומות. נמצאו גבהים יחסיים (עד 4.6 מ') שעשויים להצביע על 2 קומות, אך אין אישור מפורש."
+    },
+    {
+      "requirement": "גובה בנייה מירבי לגג שטוח כולל מעקה",
+      "status": "WARNING",
+      "source": "סעיף 2.5",
+      "measured_value": 4.6,
+      "notes": "נמצאו גבהים יחסיים מקסימליים של 4.6 מ'. אם זהו גובה קומה בודדת, הגובה הכולל עשוי להיות בסביבות 7-8 מ'. אין נתון מוחלט של גובה בניין מפני קרקע."
+    },
+    {
+      "requirement": "גובה בנייה מירבי לגג רעפים או גג שטוח עם מבנה יציאה",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.5",
+      "measured_value": null,
+      "notes": "לא ניתן לקבוע סוג גג (רעפים/שטוח) ולא נמצא גובה כולל של הבניין מפני קרקע."
+    },
+    {
+      "requirement": "גובה מירבי למבנה יציאה לגג",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.5",
+      "measured_value": null,
+      "notes": "לא זוהה מבנה יציאה לגג בתוכניות."
+    },
+    {
+      "requirement": "שטח מירבי למבנה יציאה לגג",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.5",
+      "measured_value": null,
+      "notes": "לא זוהה מבנה יציאה לגג ולא נמצא שטחו."
+    },
+    {
+      "requirement": "קו בניין קדמי (חזית משיקה לדרך)",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.5",
+      "measured_value": null,
+      "notes": "לא נמצאו נתוני קווי בניין מחושבים. מערכת ה-Spatial Correlation החזירה מערך ריק של setbacks."
+    },
+    {
+      "requirement": "קו בניין צדדי",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.5",
+      "measured_value": null,
+      "notes": "לא נמצאו נתוני קווי בניין צדדיים. חסר: מדידת מרחק בין גבול מגרש לקיר בניין."
+    },
+    {
+      "requirement": "קו בניין אחורי",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.5",
+      "measured_value": null,
+      "notes": "לא נמצאו נתוני קווי בניין אחוריים."
+    },
+    {
+      "requirement": "הבלטת אלמנטים ארכיטקטוניים מעבר לקווי בניין",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.5.ג",
+      "measured_value": null,
+      "notes": "לא ניתן לזהות הבלטות ארכיטקטוניות ללא קווי בניין מוגדרים."
+    },
+    {
+      "requirement": "שטח מירבי לחניה מקורה/מבנה חניה ליחידה",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.6.א",
+      "measured_value": null,
+      "notes": "לא נמצאו נתוני חניה בקובץ DXF."
+    },
+    {
+      "requirement": "שטח מירבי למחסן ליחידה",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.6.ב",
+      "measured_value": null,
+      "notes": "לא זוהה מחסן בתוכניות ולא נמצא שטחו."
+    },
+    {
+      "requirement": "שטח כולל מירבי למבני עזר",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.6.ב",
+      "measured_value": null,
+      "notes": "לא זוהו מבני עזר בתוכניות."
+    },
+    {
+      "requirement": "גובה מירבי למבני עזר",
+      "status": "PASS",
+      "source": "סעיף 2.6",
+      "measured_value": 2.2,
+      "notes": "נמצאו גבהים של 2.1-2.2 מ' ב-viewports שונים, התואמים למבני עזר. הגובה המירבי 2.2 מ' עומד בדרישה של 2.2 מ'."
+    },
+    {
+      "requirement": "גובה מירבי למסד",
+      "status": "PASS",
+      "source": "הגדרות - מסד",
+      "measured_value": 1.25,
+      "notes": "נמצאו גבהים של 1.05-1.25 מ' שעשויים לייצג מסד. הערך 1.25 מ' עומד בדרישה של עד 1.5 מ'."
+    },
+    {
+      "requirement": "גובה מינימלי למעקה גג",
+      "status": "PASS",
+      "source": "הגדרות - מעקה גג",
+      "measured_value": 1.05,
+      "notes": "נמצא גובה 1.05 מ' המתאים לגובה מעקה גג מינימלי."
+    },
+    {
+      "requirement": "גובה מירבי למעקה גג",
+      "status": "PASS",
+      "source": "הגדרות - מעקה גג",
+      "measured_value": 1.05,
+      "notes": "גובה מעקה 1.05 מ' נמוך מהמקסימום המותר של 1.4 מ'."
+    },
+    {
+      "requirement": "גובה מירבי למרתף",
+      "status": "CANNOT_CHECK",
+      "source": "הגדרות - מרתף",
+      "measured_value": null,
+      "notes": "לא זוהה מרתף בתוכניות באופן מפורש."
+    },
+    {
+      "requirement": "בליטה מירבית של תקרת מרתף מפני הקרקע",
+      "status": "CANNOT_CHECK",
+      "source": "הגדרות - מרתף",
+      "measured_value": null,
+      "notes": "לא זוהה מרתף ולא ניתן לבדוק בליטת תקרה."
+    },
+    {
+      "requirement": "גובה מינימלי לחישוב שטח בעליית גג",
+      "status": "CANNOT_CHECK",
+      "source": "הגדרות - עליית גג",
+      "measured_value": null,
+      "notes": "לא זוהתה עליית גג בתוכניות."
+    },
+    {
+      "requirement": "גודל מגרש מינימלי לבית דו משפחתי",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.1",
+      "measured_value": null,
+      "notes": "לא רלוונטי — לא ניתן לקבוע אם מדובר בבית חד או דו משפחתי, ואין נתוני שטח מגרש."
+    }
+  ],
+  "duration_ms": 352076,
+  "timestamp": "2026-04-25T16:52:46.346Z"
+}

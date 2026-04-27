@@ -1,0 +1,10 @@
+{
+  "total_records": 2536,
+  "rooms_high_conf": 1,
+  "rooms_low_conf": 0,
+  "rooms_by_key_high_conf": {
+    "balcony": 1
+  },
+  "noise": 65,
+  "unclassified": 1143
+}

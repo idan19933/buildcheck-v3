@@ -1,0 +1,364 @@
+{
+  "file_info": {
+    "version": "AC1009",
+    "encoding": "cp1252"
+  },
+  "sheets": [
+    {
+      "sheet_number": 1,
+      "name": "Ground Floor / קומת קרקע",
+      "name_en": "Ground Floor",
+      "type": "floor_plan",
+      "scale": null,
+      "svg_file": "sheet_01_floor-plan.svg",
+      "geometry_source": "VIEWPORT1",
+      "annotation_source": "VIEWPORT1"
+    },
+    {
+      "sheet_number": 2,
+      "name": "Annotations",
+      "name_en": "Annotations",
+      "type": "other_annotations",
+      "scale": null,
+      "svg_file": "sheet_02_other-annotations.svg",
+      "geometry_source": "VIEWPORT2",
+      "annotation_source": "VIEWPORT2"
+    },
+    {
+      "sheet_number": 3,
+      "name": "Survey / מדידה",
+      "name_en": "Survey",
+      "type": "survey",
+      "scale": null,
+      "svg_file": "sheet_03_survey.svg",
+      "geometry_source": "VIEWPORT3",
+      "annotation_source": "VIEWPORT3"
+    },
+    {
+      "sheet_number": 4,
+      "name": "Survey / מדידה",
+      "name_en": "Survey",
+      "type": "survey",
+      "scale": null,
+      "svg_file": "sheet_04_survey.svg",
+      "geometry_source": "VIEWPORT4",
+      "annotation_source": "VIEWPORT4"
+    },
+    {
+      "sheet_number": 5,
+      "name": "Elevation / חזית",
+      "name_en": "Elevation",
+      "type": "elevation",
+      "scale": null,
+      "svg_file": "sheet_05_elevation.svg",
+      "geometry_source": "VIEWPORT5",
+      "annotation_source": "VIEWPORT5"
+    },
+    {
+      "sheet_number": 6,
+      "name": "Elevation / חזית",
+      "name_en": "Elevation",
+      "type": "elevation",
+      "scale": null,
+      "svg_file": "sheet_06_elevation.svg",
+      "geometry_source": "VIEWPORT6",
+      "annotation_source": "VIEWPORT6"
+    },
+    {
+      "sheet_number": 7,
+      "name": "Ground Floor / קומת קרקע",
+      "name_en": "Ground Floor",
+      "type": "floor_plan",
+      "scale": null,
+      "svg_file": "sheet_07_floor-plan.svg",
+      "geometry_source": "VIEWPORT7",
+      "annotation_source": "VIEWPORT7"
+    },
+    {
+      "sheet_number": 8,
+      "name": "Ground Floor / קומת קרקע",
+      "name_en": "Ground Floor",
+      "type": "floor_plan",
+      "scale": null,
+      "svg_file": "sheet_08_floor-plan.svg",
+      "geometry_source": "VIEWPORT8",
+      "annotation_source": "VIEWPORT8"
+    },
+    {
+      "sheet_number": 9,
+      "name": "Ground Floor / קומת קרקע",
+      "name_en": "Ground Floor",
+      "type": "floor_plan",
+      "scale": null,
+      "svg_file": "sheet_09_floor-plan.svg",
+      "geometry_source": "VIEWPORT9",
+      "annotation_source": "VIEWPORT9"
+    },
+    {
+      "sheet_number": 10,
+      "name": "Ground Floor / קומת קרקע",
+      "name_en": "Ground Floor",
+      "type": "floor_plan",
+      "scale": null,
+      "svg_file": "sheet_10_floor-plan.svg",
+      "geometry_source": "VIEWPORT10",
+      "annotation_source": "VIEWPORT10"
+    },
+    {
+      "sheet_number": 11,
+      "name": "Ground Floor / קומת קרקע",
+      "name_en": "Ground Floor",
+      "type": "floor_plan",
+      "scale": null,
+      "svg_file": "sheet_11_floor-plan.svg",
+      "geometry_source": "VIEWPORT11",
+      "annotation_source": "VIEWPORT11"
+    },
+    {
+      "sheet_number": 12,
+      "name": "Ground Floor / קומת קרקע",
+      "name_en": "Ground Floor",
+      "type": "floor_plan",
+      "scale": null,
+      "svg_file": "sheet_12_floor-plan.svg",
+      "geometry_source": "VIEWPORT12",
+      "annotation_source": "VIEWPORT12"
+    },
+    {
+      "sheet_number": 13,
+      "name": "Ground Floor / קומת קרקע",
+      "name_en": "Ground Floor",
+      "type": "floor_plan",
+      "scale": null,
+      "svg_file": "sheet_13_floor-plan.svg",
+      "geometry_source": "VIEWPORT13",
+      "annotation_source": "VIEWPORT13"
+    },
+    {
+      "sheet_number": 14,
+      "name": "Ground Floor / קומת קרקע",
+      "name_en": "Ground Floor",
+      "type": "floor_plan",
+      "scale": null,
+      "svg_file": "sheet_14_floor-plan.svg",
+      "geometry_source": "VIEWPORT14",
+      "annotation_source": "VIEWPORT14"
+    },
+    {
+      "sheet_number": 15,
+      "name": "Ground Floor / קומת קרקע",
+      "name_en": "Ground Floor",
+      "type": "floor_plan",
+      "scale": null,
+      "svg_file": "sheet_15_floor-plan.svg",
+      "geometry_source": "VIEWPORT15",
+      "annotation_source": "VIEWPORT15"
+    },
+    {
+      "sheet_number": 16,
+      "name": "Ground Floor / קומת קרקע",
+      "name_en": "Ground Floor",
+      "type": "floor_plan",
+      "scale": null,
+      "svg_file": "sheet_16_floor-plan.svg",
+      "geometry_source": "VIEWPORT16",
+      "annotation_source": "VIEWPORT16"
+    },
+    {
+      "sheet_number": 17,
+      "name": "Survey / מדידה",
+      "name_en": "Survey",
+      "type": "survey",
+      "scale": null,
+      "svg_file": "sheet_17_survey.svg",
+      "geometry_source": "VIEWPORT17",
+      "annotation_source": "VIEWPORT17"
+    }
+  ],
+  "compliance_data": {
+    "setbacks": [],
+    "height_analysis": {
+      "all_relative": [
+        -0.04,
+        -0.01,
+        0,
+        0.02,
+        1,
+        2,
+        2.7,
+        3,
+        3.05,
+        3.1,
+        4,
+        4.3,
+        4.6,
+        5,
+        7,
+        8,
+        10,
+        15,
+        17
+      ],
+      "all_absolute": [
+        605,
+        615,
+        635,
+        645,
+        664,
+        665,
+        675,
+        735,
+        843.1,
+        857,
+        1160,
+        1165,
+        1200,
+        1269,
+        1272,
+        1320
+      ],
+      "roof_height": 5
+    },
+    "dimension_chains": [
+      {
+        "x_position": 959,
+        "values_cm": [
+          80,
+          35,
+          25,
+          286,
+          17,
+          20
+        ],
+        "total_cm": 463,
+        "total_m": 4.63,
+        "source_viewport": "VIEWPORT11"
+      },
+      {
+        "x_position": 1062,
+        "values_cm": [
+          80,
+          35,
+          25,
+          65,
+          115,
+          105,
+          18,
+          20
+        ],
+        "total_cm": 463,
+        "total_m": 4.63,
+        "source_viewport": "VIEWPORT11"
+      },
+      {
+        "x_position": 1023,
+        "values_cm": [
+          115,
+          25,
+          285,
+          18,
+          20
+        ],
+        "total_cm": 463,
+        "total_m": 4.63,
+        "source_viewport": "VIEWPORT11"
+      },
+      {
+        "x_position": 715,
+        "values_cm": [
+          150,
+          25,
+          285,
+          18,
+          20
+        ],
+        "total_cm": 498,
+        "total_m": 4.98,
+        "source_viewport": "VIEWPORT12"
+      },
+      {
+        "x_position": 682,
+        "values_cm": [
+          140,
+          15,
+          15,
+          285,
+          18,
+          20
+        ],
+        "total_cm": 493,
+        "total_m": 4.93,
+        "source_viewport": "VIEWPORT12"
+      },
+      {
+        "x_position": 652,
+        "values_cm": [
+          115,
+          25,
+          286,
+          17,
+          20
+        ],
+        "total_cm": 463,
+        "total_m": 4.63,
+        "source_viewport": "VIEWPORT12"
+      },
+      {
+        "x_position": 620,
+        "values_cm": [
+          80,
+          35,
+          25,
+          283,
+          20,
+          20
+        ],
+        "total_cm": 463,
+        "total_m": 4.63,
+        "source_viewport": "VIEWPORT12"
+      },
+      {
+        "x_position": 641,
+        "values_cm": [
+          25,
+          258
+        ],
+        "total_cm": 283,
+        "total_m": 2.83,
+        "source_viewport": "VIEWPORT12"
+      },
+      {
+        "x_position": 275,
+        "values_cm": [
+          120,
+          25,
+          75,
+          100,
+          108,
+          20,
+          20
+        ],
+        "total_cm": 468,
+        "total_m": 4.68,
+        "source_viewport": "VIEWPORT13"
+      },
+      {
+        "x_position": 118,
+        "values_cm": [
+          80,
+          35,
+          25,
+          283,
+          20,
+          20
+        ],
+        "total_cm": 463,
+        "total_m": 4.63,
+        "source_viewport": "VIEWPORT13"
+      }
+    ],
+    "parking": null,
+    "survey": null,
+    "label_correlations": []
+  }
+}

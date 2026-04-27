@@ -1,0 +1,193 @@
+{
+  "label": "old_commit_614dfc7",
+  "run_index": 2,
+  "analysis_id": "6e860c0e-c074-42ed-be1e-809a6ef11105",
+  "status": "COMPLETED",
+  "error": null,
+  "score": 0,
+  "status_counts": {
+    "pass": 0,
+    "fail": 0,
+    "warning": 3,
+    "cannot_check": 22
+  },
+  "per_requirement": [
+    {
+      "requirement": "גודל מגרש מינימלי לבית חד משפחתי",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.1",
+      "measured_value": null,
+      "notes": "לא נמצאו נתוני שטח מגרש בקובץ ה-DXF. חסר: פוליגון סגור של גבולות המגרש או תווית שטח מגרש."
+    },
+    {
+      "requirement": "גודל מגרש מינימלי לבית דו משפחתי",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.1",
+      "measured_value": null,
+      "notes": "לא ניתן לקבוע אם מדובר בבית דו משפחתי ולא נמצאו נתוני שטח מגרש."
+    },
+    {
+      "requirement": "שטח בנייה מירבי לבית חד משפחתי",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.4.א",
+      "measured_value": null,
+      "notes": "לא נמצאו נתוני שטחי בנייה מחושבים. חסר: טבלת שטחים או פוליגונים סגורים עם חישוב שטח."
+    },
+    {
+      "requirement": "שטח מירבי בקומת קרקע לבית חד משפחתי",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.4.א",
+      "measured_value": null,
+      "notes": "לא נמצאו נתוני שטח קומת קרקע. חסר: חישוב שטחים לפי קומות."
+    },
+    {
+      "requirement": "שטח מרתף מירבי לבית חד משפחתי",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.4.א",
+      "measured_value": null,
+      "notes": "לא נמצאו נתוני שטח מרתף בקובץ."
+    },
+    {
+      "requirement": "מספר קומות מירבי באזור מגורים א",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.5",
+      "measured_value": null,
+      "notes": "לא נמצאה תווית מפורשת של מספר קומות. בחתכים נראים גבהים יחסיים אך לא ספירת קומות."
+    },
+    {
+      "requirement": "גובה בנייה מירבי לגג שטוח כולל מעקה",
+      "status": "WARNING",
+      "source": "סעיף 2.5",
+      "measured_value": 4.6,
+      "notes": "נמצאו רומים יחסיים בטווח עד 4.6 מ'. הגובה המקסימלי שנמדד הוא 4.6 מ' מנקודת ייחוס, אך לא ברור אם זה גובה הבניין הכולל או רום קומה בודדת. נדרש אימות."
+    },
+    {
+      "requirement": "גובה בנייה מירבי לגג רעפים או גג שטוח עם מבנה יציאה",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.5",
+      "measured_value": null,
+      "notes": "לא ניתן לקבוע את סוג הגג (רעפים/שטוח) ואת הגובה הכולל מהנתונים הקיימים."
+    },
+    {
+      "requirement": "גובה מירבי למבנה יציאה לגג",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.5",
+      "measured_value": null,
+      "notes": "לא זוהה מבנה יציאה לגג בתוכניות."
+    },
+    {
+      "requirement": "שטח מירבי למבנה יציאה לגג",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.5",
+      "measured_value": null,
+      "notes": "לא זוהה מבנה יציאה לגג ולא נמצא שטח מחושב עבורו."
+    },
+    {
+      "requirement": "קו בניין קדמי (חזית משיקה לדרך)",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.5",
+      "measured_value": null,
+      "notes": "לא נמצאו נתוני קווי בניין מעובדים. מערך setbacks ריק."
+    },
+    {
+      "requirement": "קו בניין צדדי",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.5",
+      "measured_value": null,
+      "notes": "לא נמצאו נתוני קווי בניין צדדיים."
+    },
+    {
+      "requirement": "קו בניין אחורי",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.5",
+      "measured_value": null,
+      "notes": "לא נמצאו נתוני קווי בניין אחוריים."
+    },
+    {
+      "requirement": "שטח מירבי לחניה מקורה/מבנה חניה ליחידה",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.6.א",
+      "measured_value": null,
+      "notes": "לא נמצאו נתוני חנייה בקובץ."
+    },
+    {
+      "requirement": "שטח מירבי למחסן ליחידה",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.6.ב",
+      "measured_value": null,
+      "notes": "לא זוהה מחסן בתוכניות ולא נמצא שטח מחושב."
+    },
+    {
+      "requirement": "שטח כולל מירבי למבני עזר",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.6.ב",
+      "measured_value": null,
+      "notes": "לא זוהו מבני עזר בתוכניות."
+    },
+    {
+      "requirement": "גובה מירבי למבני עזר",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.6",
+      "measured_value": null,
+      "notes": "לא זוהו מבני עזר בתוכניות."
+    },
+    {
+      "requirement": "גובה מירבי למסד",
+      "status": "CANNOT_CHECK",
+      "source": "הגדרות - מסד",
+      "measured_value": null,
+      "notes": "לא זוהה מסד בחתכים או בתוכניות."
+    },
+    {
+      "requirement": "גובה מינימלי למעקה גג",
+      "status": "WARNING",
+      "source": "הגדרות - מעקה גג",
+      "measured_value": 1.05,
+      "notes": "נמצא רום 1.05 מ' בחתכים שעשוי להתאים למעקה גג. תואם לדרישה המינימלית."
+    },
+    {
+      "requirement": "גובה מירבי למעקה גג",
+      "status": "WARNING",
+      "source": "הגדרות - מעקה גג",
+      "measured_value": 1.05,
+      "notes": "נמצא רום 1.05 מ' - בטווח המותר (עד 1.4 מ'). אך לא ניתן לאשר בוודאות שזהו מעקה הגג."
+    },
+    {
+      "requirement": "גובה מירבי למרתף",
+      "status": "CANNOT_CHECK",
+      "source": "הגדרות - מרתף",
+      "measured_value": null,
+      "notes": "לא זוהה מרתף בחתכים. רומים שליליים (-0.04, -0.01, -0.02) קטנים מדי להיות גובה מרתף."
+    },
+    {
+      "requirement": "בליטה מירבית של תקרת מרתף מפני הקרקע",
+      "status": "CANNOT_CHECK",
+      "source": "הגדרות - מרתף",
+      "measured_value": null,
+      "notes": "לא זוהה מרתף בתוכניות."
+    },
+    {
+      "requirement": "גובה מינימלי לחישוב שטח בעליית גג",
+      "status": "CANNOT_CHECK",
+      "source": "הגדרות - עליית גג",
+      "measured_value": null,
+      "notes": "לא זוהתה עליית גג בתוכניות."
+    },
+    {
+      "requirement": "שטח מירבי לשימוש בחלל גג רעפים",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.4.ה",
+      "measured_value": null,
+      "notes": "לא זוהה חלל גג רעפים ולא נמצא שטח מחושב."
+    },
+    {
+      "requirement": "הבלטת אלמנטים ארכיטקטוניים מעבר לקווי בניין",
+      "status": "CANNOT_CHECK",
+      "source": "סעיף 2.5.ג",
+      "measured_value": null,
+      "notes": "לא ניתן לבדוק הבלטות ללא נתוני קווי בניין מדויקים."
+    }
+  ],
+  "duration_ms": 336366,
+  "timestamp": "2026-04-25T16:33:54.770Z"
+}

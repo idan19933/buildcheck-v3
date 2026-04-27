@@ -1,0 +1,197 @@
+{
+  "boundaries": [
+    {
+      "viewport": "VIEWPORT1",
+      "raw": "\\U+0099\\U+0098\\U+0082\\U+008E",
+      "decoded": "שרגמ",
+      "matched_word_logical": "מגרש",
+      "matched_word_visual": "שרגמ"
+    },
+    {
+      "viewport": "VIEWPORT1",
+      "raw": ": \\U+0084\\U+0097\\U+008C\\U+0087\\U+0084/\\U+0099\\U+0098\\U+0082\\U+008E\\U+0084",
+      "decoded": ": הקלחה/שרגמה",
+      "matched_word_logical": "מגרש",
+      "matched_word_visual": "שרגמ"
+    },
+    {
+      "viewport": "VIEWPORT3",
+      "raw": "\\U+0099\\U+0098\\U+0082\\U+008E",
+      "decoded": "שרגמ",
+      "matched_word_logical": "מגרש",
+      "matched_word_visual": "שרגמ"
+    },
+    {
+      "viewport": "VIEWPORT3",
+      "raw": ".\\U+0092.?.\\U+009A \\U+0099\\U+0098\\U+0082\\U+008E",
+      "decoded": ".ע.?.ת שרגמ",
+      "matched_word_logical": "מגרש",
+      "matched_word_visual": "שרגמ"
+    },
+    {
+      "viewport": "VIEWPORT3",
+      "raw": "\\U+0098\\U+0094\\U+0092 \\U+008A\\U+0098\\U+0083",
+      "decoded": "רפע ךרד",
+      "matched_word_logical": "דרך",
+      "matched_word_visual": "ךרד"
+    },
+    {
+      "viewport": "VIEWPORT3",
+      "raw": "\\U+0098\\U+0094\\U+0092 \\U+008A\\U+0098\\U+0083",
+      "decoded": "רפע ךרד",
+      "matched_word_logical": "דרך",
+      "matched_word_visual": "ךרד"
+    },
+    {
+      "viewport": "VIEWPORT4",
+      "raw": "1 \\U+009A\\U+0089\\U+0086\\U+0087",
+      "decoded": "1 תיזח",
+      "matched_word_logical": "חזית",
+      "matched_word_visual": "תיזח"
+    },
+    {
+      "viewport": "VIEWPORT4",
+      "raw": "4 \\U+009A\\U+0089\\U+0086\\U+0087",
+      "decoded": "4 תיזח",
+      "matched_word_logical": "חזית",
+      "matched_word_visual": "תיזח"
+    },
+    {
+      "viewport": "VIEWPORT4",
+      "raw": "3 \\U+009A\\U+0089\\U+0086\\U+0087",
+      "decoded": "3 תיזח",
+      "matched_word_logical": "חזית",
+      "matched_word_visual": "תיזח"
+    },
+    {
+      "viewport": "VIEWPORT4",
+      "raw": "1 \\U+009A\\U+0089\\U+0086\\U+0087",
+      "decoded": "1 תיזח",
+      "matched_word_logical": "חזית",
+      "matched_word_visual": "תיזח"
+    },
+    {
+      "viewport": "VIEWPORT4",
+      "raw": "4 \\U+009A\\U+0089\\U+0086\\U+0087",
+      "decoded": "4 תיזח",
+      "matched_word_logical": "חזית",
+      "matched_word_visual": "תיזח"
+    },
+    {
+      "viewport": "VIEWPORT4",
+      "raw": "2 \\U+009A\\U+0089\\U+0086\\U+0087",
+      "decoded": "2 תיזח",
+      "matched_word_logical": "חזית",
+      "matched_word_visual": "תיזח"
+    },
+    {
+      "viewport": "VIEWPORT4",
+      "raw": "3 \\U+009A\\U+0089\\U+0086\\U+0087",
+      "decoded": "3 תיזח",
+      "matched_word_logical": "חזית",
+      "matched_word_visual": "תיזח"
+    },
+    {
+      "viewport": "VIEWPORT4",
+      "raw": "1 \\U+009A\\U+0089\\U+0086\\U+0087",
+      "decoded": "1 תיזח",
+      "matched_word_logical": "חזית",
+      "matched_word_visual": "תיזח"
+    },
+    {
+      "viewport": "VIEWPORT4",
+      "raw": "2 \\U+009A\\U+0089\\U+0086\\U+0087",
+      "decoded": "2 תיזח",
+      "matched_word_logical": "חזית",
+      "matched_word_visual": "תיזח"
+    }
+  ],
+  "construction_elements": [
+    {
+      "viewport": "VIEWPORT1",
+      "raw": "?\\U+0089\\U+0083\\U+0085\\U+008E\\U+0092 \\U+009A\\U+008E\\U+0085\\U+0097",
+      "decoded": "?ידומע תמוק",
+      "matched_word_logical": "עמוד",
+      "matched_word_visual": "דומע"
+    },
+    {
+      "viewport": "VIEWPORT1",
+      "raw": "?\\U+0089\\U+0089?\\U+0085\\U+0096\\U+0089\\U+0087 \\U+009A\\U+0085\\U+0098\\U+0089\\U+0097",
+      "decoded": "?יי?וציח תוריק",
+      "matched_word_logical": "קיר",
+      "matched_word_visual": "ריק"
+    },
+    {
+      "viewport": "VIEWPORT1",
+      "raw": "\\U+0082\\U+0082",
+      "decoded": "גג",
+      "matched_word_logical": "גג",
+      "matched_word_visual": "גג"
+    },
+    {
+      "viewport": "VIEWPORT1",
+      "raw": "\\U+009A\\U+0085\\U+0082\\U+0098\\U+0083\\U+008E",
+      "decoded": "תוגרדמ",
+      "matched_word_logical": "מדרגות",
+      "matched_word_visual": "תוגרדמ"
+    },
+    {
+      "viewport": "VIEWPORT1",
+      "raw": "\\U+009A\\U+0085\\U+0082\\U+0098\\U+0083\\U+008E \\U+0089\\U+0098\\U+0083\\U+0087",
+      "decoded": "תוגרדמ ירדח",
+      "matched_word_logical": "מדרגות",
+      "matched_word_visual": "תוגרדמ"
+    },
+    {
+      "viewport": "VIEWPORT1",
+      "raw": "\\U+009A\\U+0085\\U+0082\\U+0098\\U+0083\\U+008E",
+      "decoded": "תוגרדמ",
+      "matched_word_logical": "מדרגות",
+      "matched_word_visual": "תוגרדמ"
+    },
+    {
+      "viewport": "VIEWPORT3",
+      "raw": "\\U+0084\\U+0098\\U+0085\\U+0080\\U+009A \\U+0083\\U+0085\\U+008E\\U+0092",
+      "decoded": "הרואת דומע",
+      "matched_word_logical": "עמוד",
+      "matched_word_visual": "דומע"
+    },
+    {
+      "viewport": "VIEWPORT3",
+      "raw": "\\U+008C\\U+008E\\U+0099\\U+0087 \\U+0083\\U+0085\\U+008E\\U+0092",
+      "decoded": "למשח דומע",
+      "matched_word_logical": "עמוד",
+      "matched_word_visual": "דומע"
+    },
+    {
+      "viewport": "VIEWPORT4",
+      "raw": "\\U+0088\\U+0098\\U+0094 \\U+0084\\U+0080\\U+0098-\\U+0098\\U+0089\\U+0097? \\U+008C\\U+0094\\U+008E",
+      "decoded": "טרפ האר-ריק? לפמ",
+      "matched_word_logical": "קיר",
+      "matched_word_visual": "ריק"
+    },
+    {
+      "viewport": "VIEWPORT4",
+      "raw": "\\U+0088\\U+0098\\U+0094 \\U+0084\\U+0080\\U+0098-\\U+0098\\U+0089\\U+0097? \\U+008C\\U+0094\\U+008E",
+      "decoded": "טרפ האר-ריק? לפמ",
+      "matched_word_logical": "קיר",
+      "matched_word_visual": "ריק"
+    }
+  ],
+  "changes": [
+    {
+      "viewport": "VIEWPORT1",
+      "raw": "\\U+0084\\U+0091\\U+0089\\U+0098\\U+0084\\U+008C",
+      "decoded": "הסירהל",
+      "matched_word_logical": "להריסה",
+      "matched_word_visual": "הסירהל"
+    },
+    {
+      "viewport": "VIEWPORT1",
+      "raw": "\\U+0099\\U+0083\\U+0087 ?\\U+0089??",
+      "decoded": "שדח ?י??",
+      "matched_word_logical": "חדש",
+      "matched_word_visual": "שדח"
+    }
+  ]
+}

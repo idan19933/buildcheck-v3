@@ -1,0 +1,205 @@
+{
+  "timestamp": "2026-04-25T11:49:25.698Z",
+  "cell": "post_softened",
+  "run_index": 1,
+  "score": 50,
+  "status_counts": {
+    "pass": 2,
+    "fail": 0,
+    "warning": 2,
+    "cannot_check": 21
+  },
+  "per_requirement": [
+    {
+      "requirement": "גודל מגרש מינימלי לבית חד משפחתי",
+      "source": "סעיף 2.1",
+      "status": "CANNOT_CHECK",
+      "measured_value": null,
+      "notes": "לא נמצאו נתוני שטח מגרש בקובץ DXF. אין closed polygon areas ואין תוויות המציינות שטח מגרש."
+    },
+    {
+      "requirement": "גודל מגרש מינימלי לבית דו משפחתי",
+      "source": "סעיף 2.1",
+      "status": "CANNOT_CHECK",
+      "measured_value": null,
+      "notes": "לא ניתן לקבוע אם מדובר בבית דו משפחתי ולא נמצאו נתוני שטח מגרש."
+    },
+    {
+      "requirement": "שטח בנייה מירבי לבית חד משפחתי",
+      "source": "סעיף 2.4.א",
+      "status": "CANNOT_CHECK",
+      "measured_value": null,
+      "notes": "לא נמצאו נתוני שטחי בנייה מחושבים (closed polygon areas) או טבלת שטחים בקובץ."
+    },
+    {
+      "requirement": "שטח מירבי בקומת קרקע לבית חד משפחתי",
+      "source": "סעיף 2.4.א",
+      "status": "CANNOT_CHECK",
+      "measured_value": null,
+      "notes": "לא נמצאו נתוני שטח קומת קרקע בקובץ DXF."
+    },
+    {
+      "requirement": "שטח מרתף מירבי לבית חד משפחתי",
+      "source": "סעיף 2.4.א",
+      "status": "CANNOT_CHECK",
+      "measured_value": null,
+      "notes": "לא נמצאו נתוני שטח מרתף בקובץ DXF."
+    },
+    {
+      "requirement": "שטח מירבי לשימוש בחלל גג רעפים",
+      "source": "סעיף 2.4.ה",
+      "status": "CANNOT_CHECK",
+      "measured_value": null,
+      "notes": "זוהתה תכנית גג (roof_plan) ב-VIEWPORT1 אך לא נמצאו נתוני שטח חלל גג."
+    },
+    {
+      "requirement": "מספר קומות מירבי באזור מגורים א",
+      "source": "סעיף 2.5",
+      "status": "CANNOT_CHECK",
+      "measured_value": null,
+      "notes": "לא נמצאו חתכים או נתונים המציינים מספר קומות בבירור. הרומים היחסיים (עד 4.6 מ') מרמזים על 1-2 קומות אך אין אישור מפורש."
+    },
+    {
+      "requirement": "גובה בנייה מירבי לגג שטוח כולל מעקה",
+      "source": "סעיף 2.5",
+      "status": "WARNING",
+      "measured_value": 4.6,
+      "notes": "הרום היחסי המקסימלי שנמצא הוא 4.6 מ'. אם זהו גובה מפני קרקע לגג, הוא נמוך מ-8 מ'. אולם אין וודאות שזהו הגובה הסופי של הבניין."
+    },
+    {
+      "requirement": "גובה בנייה מירבי לגג רעפים או גג שטוח עם מבנה יציאה",
+      "source": "סעיף 2.5",
+      "status": "WARNING",
+      "measured_value": 4.6,
+      "notes": "הרום המקסימלי 4.6 מ' נמוך משמעותית מ-9.5 מ', אך לא ברור אם יש גג רעפים או מבנה יציאה."
+    },
+    {
+      "requirement": "גובה מירבי למבנה יציאה לגג",
+      "source": "סעיף 2.5",
+      "status": "CANNOT_CHECK",
+      "measured_value": null,
+      "notes": "לא זוהה מבנה יציאה לגג בתוכניות."
+    },
+    {
+      "requirement": "שטח מירבי למבנה יציאה לגג",
+      "source": "סעיף 2.5",
+      "status": "CANNOT_CHECK",
+      "measured_value": null,
+      "notes": "לא זוהה מבנה יציאה לגג בתוכניות."
+    },
+    {
+      "requirement": "קו בניין קדמי (חזית משיקה לדרך)",
+      "source": "סעיף 2.5",
+      "status": "CANNOT_CHECK",
+      "measured_value": null,
+      "notes": "לא נמצאו תוויות קו בניין או גבול מגרש בסיווג הסמנטי. מערך קווי בניין ריק."
+    },
+    {
+      "requirement": "קו בניין צדדי",
+      "source": "סעיף 2.5",
+      "status": "CANNOT_CHECK",
+      "measured_value": null,
+      "notes": "לא נמצאו נתוני קווי בניין צדדיים בקובץ."
+    },
+    {
+      "requirement": "קו בניין אחורי",
+      "source": "סעיף 2.5",
+      "status": "CANNOT_CHECK",
+      "measured_value": null,
+      "notes": "לא נמצאו נתוני קווי בניין אחוריים בקובץ."
+    },
+    {
+      "requirement": "הבלטת אלמנטים ארכיטקטוניים מעבר לקווי בניין",
+      "source": "סעיף 2.5.ג",
+      "status": "CANNOT_CHECK",
+      "measured_value": null,
+      "notes": "לא ניתן לבדוק הבלטות ללא נתוני קווי בניין."
+    },
+    {
+      "requirement": "שטח מירבי לחניה מקורה/מבנה חניה ליחידה",
+      "source": "סעיף 2.6.א",
+      "status": "CANNOT_CHECK",
+      "measured_value": null,
+      "notes": "לא נמצאו נתוני חנייה בקובץ DXF."
+    },
+    {
+      "requirement": "שטח מירבי למחסן ליחידה",
+      "source": "סעיף 2.6.ב",
+      "status": "CANNOT_CHECK",
+      "measured_value": null,
+      "notes": "לא נמצאו נתוני מחסן בקובץ DXF."
+    },
+    {
+      "requirement": "שטח כולל מירבי למבני עזר",
+      "source": "סעיף 2.6.ב",
+      "status": "CANNOT_CHECK",
+      "measured_value": null,
+      "notes": "לא נמצאו נתוני מבני עזר בקובץ DXF."
+    },
+    {
+      "requirement": "גובה מירבי למבני עזר",
+      "source": "סעיף 2.6",
+      "status": "CANNOT_CHECK",
+      "measured_value": null,
+      "notes": "לא זוהו מבני עזר בתוכניות."
+    },
+    {
+      "requirement": "גובה מירבי למסד",
+      "source": "הגדרות - מסד",
+      "status": "CANNOT_CHECK",
+      "measured_value": null,
+      "notes": "לא זוהה מסד בתוכניות או בחתכים."
+    },
+    {
+      "requirement": "גובה מינימלי למעקה גג",
+      "source": "הגדרות - מעקה גג",
+      "status": "PASS",
+      "measured_value": 1.05,
+      "notes": "נמצא רום 1.05 מ' במספר viewports (7,8) התואם לגובה מעקה גג מינימלי."
+    },
+    {
+      "requirement": "גובה מירבי למעקה גג",
+      "source": "הגדרות - מעקה גג",
+      "status": "PASS",
+      "measured_value": 1.05,
+      "notes": "רום מעקה 1.05 מ' נמוך מהמקסימום המותר 1.4 מ'."
+    },
+    {
+      "requirement": "גובה מירבי למרתף",
+      "source": "הגדרות - מרתף",
+      "status": "CANNOT_CHECK",
+      "measured_value": null,
+      "notes": "לא זוהה מרתף בתוכניות. רומים שליליים (-0.04, -0.01, -0.02) קטנים מדי להצביע על מרתף."
+    },
+    {
+      "requirement": "בליטה מירבית של תקרת מרתף מפני הקרקע",
+      "source": "הגדרות - מרתף",
+      "status": "CANNOT_CHECK",
+      "measured_value": null,
+      "notes": "לא זוהה מרתף בתוכניות."
+    },
+    {
+      "requirement": "גובה מינימלי לחישוב שטח בעליית גג",
+      "source": "הגדרות - עליית גג",
+      "status": "CANNOT_CHECK",
+      "measured_value": null,
+      "notes": "לא נמצאו נתוני עליית גג בקובץ."
+    }
+  ],
+  "decoder_stage_hits": {
+    "uplus_escape": 378,
+    "cp862_remap": 350,
+    "cp1255_remap": 0
+  },
+  "semantic_index_summary": {
+    "boundaries_total": 0,
+    "rooms_total": 1,
+    "elevations_abs_total": 0,
+    "elevations_rel_total": 153,
+    "unclassified_count": 1143,
+    "noise_count": 65
+  },
+  "llm_call_metadata": {
+    "duration_ms": 51995
+  }
+}
