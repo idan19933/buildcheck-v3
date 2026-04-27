@@ -1,7 +1,8 @@
 import { promises as fs } from 'node:fs';
 import path from 'path';
+import { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma';
-import { classifyDxfTexts, extractDxfViewports, renderDxfPreviews } from './dxf.service';
+import { classifyDxfTexts, extractDxfViewports, renderDxfPreviews, type SemanticSummary } from './dxf.service';
 import { processDxf } from './dxf-pipeline.service';
 import { extractPdfText, parseTavaRequirements, TavaRequirement } from './pdf-extract.service';
 import { runCoreComplianceAgent } from './core-compliance-agent';
@@ -73,28 +74,76 @@ export async function runCoreAnalysis(analysisId: string): Promise<void> {
       }
     };
 
-    // Semantic text classification — runs in parallel with extract + AI pipeline.
-    // Output (classified_texts.json) lives next to the renders dir so the
-    // codegen prompt can ingest it. Failure here is non-fatal: we just won't
-    // have the pre-classified summary to feed to Claude.
+    // Semantic text classification.
+    // - Default mode (legacy): runs in parallel with codegen — the index is
+    //   only used by the compliance agent.
+    // - USE_COMPOSED_CODEGEN=true: codegen WAITS for semantic so the
+    //   generated extractor receives the SemanticIndex as authoritative
+    //   classifications (Version-A composed pipeline).
+    const useComposed = process.env.USE_COMPOSED_CODEGEN === 'true';
     const semanticOutPath = path.join(renderRoot, '_pipeline_meta', 'classified_texts.json');
     const semanticPromise = classifyDxfTexts(dxfPath, semanticOutPath).then(
       (s) => ({ ok: true as const, value: s }),
       (e) => ({ ok: false as const, error: e instanceof Error ? e.message : String(e) }),
     );
 
-    const [viewportData, pipelineSettled, semanticSettled] = await Promise.all([
-      extractDxfViewports(dxfPath),
-      processDxf(dxfPath, renderRoot, {
+    let viewportData: Awaited<ReturnType<typeof extractDxfViewports>>;
+    let pipelineSettled: { ok: true; value: Awaited<ReturnType<typeof processDxf>> } | { ok: false; error: string };
+    let semanticSettled: { ok: true; value: SemanticSummary } | { ok: false; error: string };
+    let semanticIndexForCodegen: SemanticIndex | null = null;
+
+    if (useComposed) {
+      // Composed: viewport extract in parallel with semantic; codegen after semantic.
+      const [vp, semR] = await Promise.all([extractDxfViewports(dxfPath), semanticPromise]);
+      viewportData = vp;
+      semanticSettled = semR.ok ? { ok: true, value: semR.value } : { ok: false, error: semR.error };
+
+      // Build the index now so codegen can consume it.
+      if (semR.ok) {
+        try {
+          const raw = await fs.readFile(semanticOutPath, 'utf-8');
+          const parsed = JSON.parse(raw);
+          const records: ClassifiedTextRecord[] = Array.isArray(parsed)
+            ? (parsed as ClassifiedTextRecord[])
+            : (parsed.records as ClassifiedTextRecord[]);
+          semanticIndexForCodegen = buildSemanticIndex(records);
+          console.log(
+            `[composed-codegen:${dxfFileId.slice(0, 8)}] passing index to codegen — ` +
+            `boundaries=${semanticIndexForCodegen.boundaries.total} ` +
+            `rooms=${semanticIndexForCodegen.rooms.total}`,
+          );
+        } catch (e) {
+          console.error(`[composed-codegen:${dxfFileId.slice(0, 8)}] index load failed:`, e);
+        }
+      }
+
+      pipelineSettled = await processDxf(dxfPath, renderRoot, {
         onProgress: (step, detail) =>
           console.log(`[pipeline:${dxfFileId.slice(0, 8)}] ${step} — ${detail}`),
         onExplorationReady,
+        semanticIndex: semanticIndexForCodegen ?? undefined,
       }).then(
         (r) => ({ ok: true as const, value: r }),
         (e) => ({ ok: false as const, error: e instanceof Error ? e.message : String(e) }),
-      ),
-      semanticPromise,
-    ]);
+      );
+    } else {
+      // Legacy parallel path.
+      const [vp, ps, ss] = await Promise.all([
+        extractDxfViewports(dxfPath),
+        processDxf(dxfPath, renderRoot, {
+          onProgress: (step, detail) =>
+            console.log(`[pipeline:${dxfFileId.slice(0, 8)}] ${step} — ${detail}`),
+          onExplorationReady,
+        }).then(
+          (r) => ({ ok: true as const, value: r }),
+          (e) => ({ ok: false as const, error: e instanceof Error ? e.message : String(e) }),
+        ),
+        semanticPromise,
+      ]);
+      viewportData = vp;
+      pipelineSettled = ps;
+      semanticSettled = ss.ok ? { ok: true, value: ss.value } : { ok: false, error: ss.error };
+    }
 
     // Persist the classification log if we got a summary back.
     if (semanticSettled.ok) {
@@ -111,12 +160,16 @@ export async function runCoreAnalysis(analysisId: string): Promise<void> {
             fuzzyClassified:   s.by_match_type.fuzzy ?? 0,
             unclassifiedCount: s.unclassified_count,
             vocabularyVersion: s.vocabulary_version,
+            decoderStageHits:  s.decoder_stage_hits ?? Prisma.JsonNull,
           },
         });
+        const hits = s.decoder_stage_hits ?? {};
+        const hitsStr = Object.entries(hits).map(([k, v]) => `${k}=${v}`).join(' ');
         console.log(
           `[semantic:${dxfFileId.slice(0, 8)}] ${s.total} texts; ` +
           `${s.high_confidence_semantic_count} semantic; ${s.unclassified_count} unclassified ` +
-          `(vocab v${s.vocabulary_version})`,
+          `(vocab v${s.vocabulary_version})` +
+          (hitsStr ? ` decoder[${hitsStr}]` : ''),
         );
       } catch (e) {
         console.error(`[semantic:${dxfFileId.slice(0, 8)}] log persist failed:`, e);
@@ -125,24 +178,17 @@ export async function runCoreAnalysis(analysisId: string): Promise<void> {
       console.error(`[semantic:${dxfFileId.slice(0, 8)}] failed: ${semanticSettled.error}`);
     }
 
-    // Read classified_texts.json back from disk and aggregate it into a
-    // structured SemanticIndex the compliance agent can reason over. Without
-    // this, the classifier output (16 building lines, 591 elevations, etc.)
-    // would be persisted to ClassificationLog but never reach the agent.
-    let semanticIndex: SemanticIndex | null = null;
-    if (semanticSettled.ok) {
+    // SemanticIndex for the compliance agent. In composed mode it's already
+    // built (used by codegen); in legacy mode we build it here from disk.
+    let semanticIndex: SemanticIndex | null = semanticIndexForCodegen;
+    if (!semanticIndex && semanticSettled.ok) {
       try {
         const raw = await fs.readFile(semanticOutPath, 'utf-8');
-        const records = JSON.parse(raw) as ClassifiedTextRecord[];
+        const parsed = JSON.parse(raw);
+        const records: ClassifiedTextRecord[] = Array.isArray(parsed)
+          ? (parsed as ClassifiedTextRecord[])
+          : (parsed.records as ClassifiedTextRecord[]);
         semanticIndex = buildSemanticIndex(records);
-        console.log(
-          `[semantic-index:${dxfFileId.slice(0, 8)}] ` +
-          `boundaries=${semanticIndex.boundaries.total} ` +
-          `rooms=${semanticIndex.rooms.total} ` +
-          `elev_abs=${semanticIndex.elevations.absolute.total} ` +
-          `elev_rel=${semanticIndex.elevations.relative.total} ` +
-          `vp_with_both=[${semanticIndex.elevations.viewportsWithBoth.join(',')}]`,
-        );
       } catch (e) {
         console.error(
           `[semantic-index:${dxfFileId.slice(0, 8)}] load failed (${semanticOutPath}):`,
@@ -150,6 +196,16 @@ export async function runCoreAnalysis(analysisId: string): Promise<void> {
         );
         semanticIndex = null;
       }
+    }
+    if (semanticIndex) {
+      console.log(
+        `[semantic-index:${dxfFileId.slice(0, 8)}] ` +
+        `boundaries=${semanticIndex.boundaries.total} ` +
+        `rooms=${semanticIndex.rooms.total} ` +
+        `elev_abs=${semanticIndex.elevations.absolute.total} ` +
+        `elev_rel=${semanticIndex.elevations.relative.total} ` +
+        `vp_with_both=[${semanticIndex.elevations.viewportsWithBoth.join(',')}]`,
+      );
     }
 
     let renderedSheets: object | undefined;

@@ -1,7 +1,15 @@
 import { callClaude, parseJsonResponse } from './claude.service';
 import type { ViewportExtraction } from './dxf.service';
 import type { TavaRequirement } from './pdf-extract.service';
-import { buildSemanticPromptSection, type SemanticIndex } from './semantic-index';
+import {
+  buildSemanticPromptSection,
+  type PromptFraming,
+  type SemanticIndex,
+} from './semantic-index';
+import {
+  isSetbackEvidence,
+  SETBACK_INTERPRETATION_INSTRUCTIONS,
+} from './setback-evidence';
 
 export interface ComplianceResult {
   requirement: string;
@@ -101,11 +109,21 @@ Geometry: ${geom.total_entities ?? 0} entities, bbox: ${JSON.stringify(geom.boun
 
   const cd = (viewportData as unknown as Record<string, unknown>).compliance_data as Record<string, unknown> | undefined;
   if (cd) {
+    // Detect schema shape of cd.setbacks. New shape (SetbackEvidence) gets
+    // explicit interpretation instructions; legacy bare-number shape gets
+    // a "treat with skepticism" note from the same instructions block.
+    const setbacks = (cd.setbacks as unknown[] | undefined) ?? [];
+    const usesNewSchema = setbacks.some(isSetbackEvidence);
+    const setbackInstructions = usesNewSchema || setbacks.length > 0
+      ? SETBACK_INTERPRETATION_INSTRUCTIONS
+      : '';
+
     summary.complianceData = `
 --- נתונים מעובדים לבדיקה (Spatial Correlation Engine) ---
 
 קווי בניין (setbacks):
-${JSON.stringify(cd.setbacks || [], null, 2)}
+${JSON.stringify(setbacks, null, 2)}
+${setbackInstructions}
 
 מעטפת בניין (dimension chains):
 ${JSON.stringify(cd.building_envelope || {}, null, 2)}
@@ -131,8 +149,10 @@ export async function runCoreComplianceAgent(
   semanticIndex: SemanticIndex | null,
 ): Promise<CoreAnalysisResult> {
   const dxf = buildDxfSummary(viewportData);
+  const framing: PromptFraming =
+    process.env.COMPLIANCE_PROMPT_VARIANT === 'softened' ? 'softened' : 'current';
   const semanticSection = semanticIndex
-    ? buildSemanticPromptSection(semanticIndex)
+    ? buildSemanticPromptSection(semanticIndex, framing)
     : '## סיווג סמנטי של טקסטים\n\n_ניתוח סמנטי לא זמין לקובץ זה. ' +
       'התבסס על השדות הלא-מסווגים בלבד._';
 

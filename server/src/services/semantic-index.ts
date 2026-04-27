@@ -77,11 +77,9 @@ export interface SemanticIndex {
 
 const HIGH_CONF = 0.7;
 const MAX_SAMPLES = 5;
-// Israeli site elevations (אבסולוטיים) are everywhere ≥ ~50m above sea level
-// outside the Dead Sea basin; relative datum elevations on a permit are
-// almost always < 30m. 50 is a conservative split that keeps Negev / Galilee
-// sites in the absolute bucket without misclassifying tall renovations.
-const ABSOLUTE_ELEVATION_MIN_ABS = 50;
+// As of Version-A prereq 1, the classifier emits distinct keys for
+// absolute_elevation, relative_elevation, and ground_zero — magnitude-based
+// split previously done here is no longer needed.
 
 function emptyCategory(): CategoryIndex {
   return { total: 0, byKey: {}, lowConfidenceCount: 0 };
@@ -138,14 +136,14 @@ export function buildSemanticIndex(records: ClassifiedTextRecord[]): SemanticInd
   for (const r of records) {
     const c = r.classification;
 
-    // Elevations come through Layer 1c as match_type='numeric_pattern',
-    // key='elevation'. The classifier doesn't distinguish absolute (סא"ב)
-    // from relative (מנקודת ייחוס) — we split here by magnitude.
-    if (c.match_type === 'numeric_pattern' && c.key === 'elevation') {
+    // Elevations: classifier emits absolute_elevation / relative_elevation /
+    // ground_zero (the latter is a special-case relative). Trust the key.
+    if (c.match_type === 'numeric_pattern' &&
+        (c.key === 'absolute_elevation' || c.key === 'relative_elevation' || c.key === 'ground_zero')) {
       const cleaned = r.decoded.trim().replace(/^[+\u00B1]/, '').replace(',', '.');
       const val = parseFloat(cleaned);
       if (!Number.isFinite(val)) continue;
-      if (Math.abs(val) >= ABSOLUTE_ELEVATION_MIN_ABS) {
+      if (c.key === 'absolute_elevation') {
         pushElevation(elevations.absolute, r, val, absVps);
       } else {
         pushElevation(elevations.relative, r, val, relVps);
@@ -223,18 +221,54 @@ function summarizeCategoryTotals(idx: SemanticIndex): string {
   return parts.length ? parts.join(', ') : 'אין';
 }
 
+export type PromptFraming = 'current' | 'softened';
+
+const FRAMING_CURRENT =
+  '_The following data comes from a deterministic 3-layer classifier ' +
+  'with confidence ≥ 0.7 on all items. Trust these counts and use them ' +
+  'when answering compliance requirements._';
+
+// Per the regression-check experiment spec: zero counts should NOT be read
+// as "absence of evidence" because vocabulary coverage is incomplete. This
+// asymmetric framing is what we're A/B testing against `current`.
+const FRAMING_SOFTENED = [
+  'The data below comes from a deterministic 3-layer classifier with a',
+  'controlled vocabulary. Read these counts with the following asymmetry:',
+  '',
+  '- **Non-zero counts are HIGH-CONFIDENCE evidence.** When the index shows',
+  '  "boundaries.building_line: 16", trust that 16 building line annotations',
+  '  exist. Use these numbers directly in your reasoning.',
+  '',
+  '- **Zero counts are NOT evidence of absence.** The vocabulary may not yet',
+  '  cover the relevant Hebrew terms in this file. A zero count means',
+  '  "the deterministic classifier did not recognize any matching terms" —',
+  '  which is different from "no such elements exist in the drawing."',
+  '',
+  'When a count is zero and the requirement asks about that category, do',
+  'NOT immediately return CANNOT_CHECK. Instead:',
+  '  1. Check the legacy text summary (the `viewportData` labels and dimensions)',
+  '     for evidence of the relevant elements',
+  '  2. Use CANNOT_CHECK only when both the structured index AND the legacy',
+  '     text lack evidence',
+  '',
+  'Use CANNOT_CHECK only when the absence of evidence is genuine, not when',
+  'the deterministic vocabulary is simply incomplete.',
+].join('\n');
+
 /**
  * Render the index into a Hebrew-headed prompt section. Designed to be
  * spliced into the compliance agent prompt right after the legacy
  * viewport summary and before the requirements list.
  */
-export function buildSemanticPromptSection(idx: SemanticIndex): string {
+export function buildSemanticPromptSection(
+  idx: SemanticIndex,
+  framing: PromptFraming = 'current',
+): string {
+  const intro = framing === 'softened' ? FRAMING_SOFTENED : FRAMING_CURRENT;
   const lines: string[] = [
     '## סיווג סמנטי של טקסטים (Semantic Classification Index)',
     '',
-    '_The following data comes from a deterministic 3-layer classifier ' +
-    'with confidence ≥ 0.7 on all items. Trust these counts and use them ' +
-    'when answering compliance requirements._',
+    intro,
     '',
     `סך הכול ${idx.totalTexts} טקסטים בקובץ. ` +
     `סווגו בוודאות גבוהה: ${summarizeCategoryTotals(idx)}. ` +

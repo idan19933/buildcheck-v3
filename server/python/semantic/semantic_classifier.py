@@ -54,15 +54,30 @@ class ClassificationResult:
 
 # ────────────────────────────────────────────── numeric patterns ──
 # Order matters — most specific first.
+#
+# Elevation discrimination, per Version-A prereq 1:
+#   absolute_elevation — 3+ digits before decimal, decimal REQUIRED, sign optional.
+#                         Matches Israeli geodetic readings (e.g. +613.64m above sea
+#                         level). Also covers `5825.00`-style readings without sign.
+#                         Decimal required so `5825` (4-digit dimension in mm) stays
+#                         classified as plain dimension.
+#   relative_elevation — 1-2 digits before decimal, sign REQUIRED. Matches datum
+#                         elevations (+0.00, +3.05, -0.50). Sign required so plain
+#                         small numbers like `220` stay as dimensions.
+# Absolute checked before relative because magnitude is more specific.
 _NUMERIC_PATTERNS: list[tuple[str, re.Pattern]] = [
-    ("scale",       re.compile(r"^\s*1\s*:\s*\d+\s*$")),
-    ("radius",      re.compile(r"^\s*R\s*=\s*\d+(?:\.\d+)?\s*$", re.I)),
-    ("percent",     re.compile(r"^\s*\d+(?:\.\d+)?\s*%\s*$")),
-    ("elevation",   re.compile(r"^\s*[+\-±]\s*\d+(?:\.\d+)?\s*$")),
-    ("ground_zero", re.compile(r"^\s*[±+\-]?\s*0\.00\s*$")),
-    ("dimension",   re.compile(r"^\s*\d+(?:\.\d+)?\s*$")),
-    ("dim_pair",    re.compile(r"^\s*\d+(?:\.\d+)?\s*[xX×]\s*\d+(?:\.\d+)?\s*$")),
-    ("eq_value",    re.compile(r"^\s*\d+(?:\.\d+)?\s*=\s*\d+(?:\.\d+)?\s*$")),
+    ("scale",              re.compile(r"^\s*1\s*:\s*\d+\s*$")),
+    ("radius",             re.compile(r"^\s*R\s*=\s*\d+(?:\.\d+)?\s*$", re.I)),
+    ("percent",            re.compile(r"^\s*\d+(?:\.\d+)?\s*%\s*$")),
+    ("ground_zero",        re.compile(r"^\s*[±+\-]?\s*0\.00\s*$")),
+    # 3-4 integer digits bounds to 100.0 - 9999.99 — wider than any real
+    # Israeli elevation (Dead Sea -415 to Mt. Hermon +1208) but tight enough
+    # to reject 6-digit coordinate values like 586468.44.
+    ("absolute_elevation", re.compile(r"^\s*[+\-]?\s*\d{3,4}\.\d+\s*$")),
+    ("relative_elevation", re.compile(r"^\s*[+\-]\s*\d{1,2}(?:\.\d+)?\s*$")),
+    ("dim_pair",           re.compile(r"^\s*\d+(?:\.\d+)?\s*[xX×]\s*\d+(?:\.\d+)?\s*$")),
+    ("eq_value",           re.compile(r"^\s*\d+(?:\.\d+)?\s*=\s*\d+(?:\.\d+)?\s*$")),
+    ("dimension",          re.compile(r"^\s*\d+(?:\.\d+)?\s*$")),
 ]
 
 

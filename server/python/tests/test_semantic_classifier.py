@@ -64,10 +64,13 @@ def test_alias_safe_room_punctuation_variant(clf):
 
 # ───────────────────────────────────────────── Layer 1c NUMERIC_PATTERN
 @pytest.mark.parametrize("text,label", [
-    ("+3.05", "elevation"),
-    ("-0.50", "elevation"),
-    ("±0.00", "elevation"),
+    ("+3.05", "relative_elevation"),
+    ("-0.50", "relative_elevation"),
+    ("+6.79", "relative_elevation"),
+    ("±0.00", "ground_zero"),
+    ("+0.00", "ground_zero"),
     ("220", "dimension"),
+    ("5825", "dimension"),
     ("1:100", "scale"),
     ("R=112.86", "radius"),
     ("35%", "percent"),
@@ -78,6 +81,36 @@ def test_numeric_patterns(clf, text, label):
     assert r.match_type == MatchType.NUMERIC_PATTERN
     assert r.key == label
     assert r.confidence == 1.0
+
+
+# ── Version A prereq 1: elevation regex split ────────────────────────────
+@pytest.mark.parametrize("text", [
+    "+613.64",       # geodetic elevation, signed
+    "613.64",        # geodetic elevation, unsigned
+    "+1396.00",      # high elevation
+    "-415.50",       # below sea level (Dead Sea region)
+])
+def test_absolute_elevation_classified(clf, text):
+    r = clf.classify(text)
+    assert r.key == "absolute_elevation", \
+        f"{text!r} → expected absolute_elevation, got {r.key}"
+
+
+@pytest.mark.parametrize("text", [
+    "+0.00", "+3.05", "+6.79", "-0.50", "+12.00", "-9.99",
+])
+def test_relative_elevation_or_ground_zero(clf, text):
+    """Relative elevations (or ground_zero for ±0.00) — never absolute."""
+    r = clf.classify(text)
+    assert r.key in ("relative_elevation", "ground_zero"), \
+        f"{text!r} → got {r.key}"
+
+
+@pytest.mark.parametrize("text", ["220", "5825", "1234"])
+def test_unsigned_integer_stays_dimension(clf, text):
+    """Plain integers (no decimal) stay as dimensions, not promoted to elevations."""
+    r = clf.classify(text)
+    assert r.key == "dimension", f"{text!r} → got {r.key}"
 
 
 # ───────────────────────────────────────────── Layer 1d NOISE

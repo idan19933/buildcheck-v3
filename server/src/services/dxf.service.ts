@@ -130,6 +130,7 @@ export interface SemanticSummary {
   by_category: Record<string, number>;
   unclassified_count: number;
   high_confidence_semantic_count: number;
+  decoder_stage_hits?: Record<string, number>;
 }
 
 /**

@@ -180,6 +180,7 @@ model ClassificationLog {
   unclassifiedCount        Int
 
   vocabularyVersion        String
+  decoderStageHits         Json?     // { uplus_escape: N, cp1255_remap: M, ... }
   createdAt                DateTime @default(now())
 
   @@index([analysisId])

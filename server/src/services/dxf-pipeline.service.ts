@@ -36,6 +36,12 @@ export interface ProcessDxfOptions {
    * Awaited; if it throws, the AI pipeline still continues.
    */
   onExplorationReady?: (exploration: unknown, explorationJsonPath: string) => Promise<void>;
+  /**
+   * Pre-computed semantic index. When provided, the codegen prompt instructs
+   * Opus to consume these classifications instead of re-classifying text.
+   * Wired by the orchestrator under USE_COMPOSED_CODEGEN=true.
+   */
+  semanticIndex?: import('./semantic-index').SemanticIndex;
 }
 
 /**
@@ -61,7 +67,7 @@ export async function processDxf(
   // Backwards-compat: callers can still pass a plain progress fn.
   const opts: ProcessDxfOptions =
     typeof optsOrProgress === 'function' ? { onProgress: optsOrProgress } : optsOrProgress ?? {};
-  const { onProgress, onExplorationReady } = opts;
+  const { onProgress, onExplorationReady, semanticIndex } = opts;
 
   mkdirSync(outputDir, { recursive: true });
   const svgDir = outputDir;
@@ -110,7 +116,7 @@ export async function processDxf(
   onProgress?.('generating', `AI is writing custom extraction code (${previewImagePaths.length} preview images attached)`);
   let scriptPath: string | null = null;
   try {
-    scriptPath = await generateExtractionScript(exploration, { previewImagePaths });
+    scriptPath = await generateExtractionScript(exploration, { previewImagePaths, semanticIndex });
     writeFileSync(path.join(metaDir, 'generated_script_path.txt'), scriptPath, 'utf-8');
   } catch (e) {
     console.error('[pipeline] code generation failed:', e);

@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import { mkdirSync, readFileSync, writeFileSync, statSync } from 'fs';
 import path from 'path';
 import { callClaude, type ImageBlock } from './claude.service';
+import type { SemanticIndex } from './semantic-index';
 
 const GENERATED_DIR = path.resolve(__dirname, '../../python/generated');
 
@@ -20,6 +21,12 @@ export interface CodegenOptions {
    * Capped at MAX_PREVIEW_IMAGES below to keep token cost reasonable.
    */
   previewImagePaths?: string[];
+  /**
+   * Pre-computed semantic classifications. When provided, the generated
+   * extractor is instructed to CONSUME these as ground truth instead of
+   * re-running text classification — see Version-A composed pipeline.
+   */
+  semanticIndex?: SemanticIndex;
 }
 
 const MAX_PREVIEW_IMAGES = 6;
@@ -34,6 +41,7 @@ export async function generateExtractionScript(
 
   const prompt = buildCodeGenPrompt(explorationJson, {
     imagesAttached: (opts.previewImagePaths ?? []).length,
+    semanticIndex: opts.semanticIndex,
   });
   const imageBlocks = buildImageBlocks(opts.previewImagePaths ?? []);
   const response = await callClaude(prompt, 'opus', imageBlocks, { maxTokens: 16000, temperature: 0 });
@@ -125,17 +133,20 @@ export async function selfCorrectScript(
 
 function buildCodeGenPrompt(
   exploration: unknown,
-  opts: { imagesAttached?: number } = {},
+  opts: { imagesAttached?: number; semanticIndex?: SemanticIndex } = {},
 ): string {
   const exp = exploration as Record<string, unknown>;
   const hints = (exp.analysis_hints as Record<string, unknown>) || {};
   const dual = hints.dual_viewport_pattern === true;
   const encoding = hints.text_encoding as Record<string, unknown> | undefined;
   const imgCount = opts.imagesAttached ?? 0;
+  const semanticSection = opts.semanticIndex
+    ? renderSemanticSectionForCodegen(opts.semanticIndex)
+    : '';
 
   return `You are a Python code generator for DXF file extraction. You will receive a structural
 exploration of a specific DXF file and must write a Python 3 script that extracts
-compliance-relevant data from it.
+compliance-relevant data from it.${semanticSection}
 
 ## EXPLORATION:
 ${JSON.stringify(exploration, null, 2)}
@@ -842,4 +853,157 @@ Before printing the final JSON, your script MUST validate and print to stderr:
 - Start with \`#!/usr/bin/env python3\` and a brief docstring.
 - Return ONLY a single fenced \`\`\`python code block. No prose around it.
 `;
+}
+
+
+// ───────────────────────────────────────── semantic section for codegen
+
+/**
+ * Renders the SemanticIndex into a "consume don't reclassify" prompt
+ * section spliced into the codegen prompt header. Goal: stop Opus from
+ * reproducing vocabulary patterns inside the generated extractor when a
+ * deterministic classifier has already done the work upstream.
+ */
+function renderSemanticSectionForCodegen(idx: SemanticIndex): string {
+  const lines: string[] = [
+    '',
+    '',
+    '## SEMANTIC CLASSIFICATIONS (authoritative — do not re-derive)',
+    '',
+    'A deterministic classifier has already analyzed every text in this DXF',
+    'and produced the following classifications. Treat them as ground truth.',
+    'Do NOT include text-classification logic in your generated extractor —',
+    'that work is done. Use the classifications below as anchors for',
+    'geometric extraction.',
+    '',
+  ];
+
+  const renderCategory = (label: string, c: SemanticIndex['boundaries']) => {
+    if (c.total === 0) return;
+    const vps = new Set<string>();
+    Object.values(c.byKey).forEach(b => Object.keys(b.byViewport).forEach(v => vps.add(v)));
+    lines.push(`### ${label}: ${c.total} annotations across ${vps.size} viewports`);
+    for (const [key, data] of Object.entries(c.byKey)) {
+      const keyVps = Object.keys(data.byViewport).join(', ');
+      lines.push(`- ${key}: ${data.total} on viewports [${keyVps}]`);
+    }
+    lines.push('');
+  };
+
+  renderCategory('Boundaries', idx.boundaries);
+  renderCategory('Rooms', idx.rooms);
+  renderCategory('Construction elements', idx.constructionElements);
+  renderCategory('Changes (renovation indicators)', idx.changes);
+  renderCategory('Sheet labels', idx.sheetLabels);
+
+  if (idx.changes.total > 0) {
+    lines.push(
+      `*Note: ${idx.changes.total} change annotations present → file represents ` +
+      `a renovation, not new construction.*`,
+    );
+    lines.push('');
+  }
+
+  // Elevations — explicit absolute / relative split done by the classifier
+  const abs = idx.elevations.absolute;
+  const rel = idx.elevations.relative;
+  if (abs.total > 0 || rel.total > 0) {
+    lines.push('### Elevations');
+    if (abs.total > 0) {
+      lines.push(`- absolute: ${abs.total}, range ${abs.min?.toFixed(2)}m to ${abs.max?.toFixed(2)}m`);
+    }
+    if (rel.total > 0) {
+      lines.push(`- relative: ${rel.total}, range ${rel.min?.toFixed(2)}m to ${rel.max?.toFixed(2)}m`);
+    }
+    if (idx.elevations.viewportsWithBoth.length > 0) {
+      lines.push(
+        `- viewports with both abs+rel (sections — building height computable): ` +
+        `[${idx.elevations.viewportsWithBoth.join(', ')}]`,
+      );
+    }
+    lines.push('');
+  }
+
+  // Geometric anchors — sample positions per category
+  lines.push('### Sample classified positions (use as geometric anchors)');
+  const anchors: string[] = [];
+  for (const [key, data] of Object.entries(idx.boundaries.byKey)) {
+    for (const s of data.samples.slice(0, 3)) {
+      anchors.push(`- boundaries/${key} "${s.text}" on ${s.viewport} at (${s.position.x.toFixed(1)}, ${s.position.y.toFixed(1)})`);
+    }
+  }
+  for (const [key, data] of Object.entries(idx.rooms.byKey)) {
+    for (const s of data.samples.slice(0, 2)) {
+      anchors.push(`- rooms/${key} "${s.text}" on ${s.viewport} at (${s.position.x.toFixed(1)}, ${s.position.y.toFixed(1)})`);
+    }
+  }
+  if (anchors.length === 0) {
+    lines.push('- (no classified positions on this file — vocabulary coverage is partial)');
+  } else {
+    lines.push(...anchors.slice(0, 25));
+  }
+  lines.push('');
+
+  // The instructions block — what to do and what NOT to do
+  lines.push('## INSTRUCTIONS FOR YOUR GENERATED EXTRACTOR');
+  lines.push('');
+  lines.push(
+    '1. CONSUME the classifications above as ground truth. Pass them through',
+    '   to the output. Do NOT re-classify text — use the provided category,',
+    '   key, and viewport for each text.',
+    '',
+    '2. USE classification positions as anchors for geometric extraction. For',
+    '   example, when computing setbacks, find the LINE/POLYLINE entities',
+    '   nearest the building_line and plot_boundary annotation positions on',
+    '   the same viewport, and measure perpendicular distance between the',
+    '   line entities — NOT between the label positions.',
+    '',
+    '3. BE HONEST about what you cannot extract. If polygon reconstruction is',
+    '   needed for room areas but the file has no closed polylines, output',
+    '   `polygon_extraction_failed` with a note rather than guessing.',
+    '',
+    '4. NEVER produce setback distances from label positions alone. Setback',
+    '   computation requires line geometry. If you only have label positions,',
+    '   output the SetbackEvidence schema:',
+    '',
+    '       {',
+    '         "viewport": "VIEWPORT23",',
+    '         "building_line_position": {"x": 1744.7, "y": 447.0},',
+    '         "plot_boundary_position": {"x": 1782.4, "y": 447.0},',
+    '         "annotation_label_distance_meters": 37.7,',
+    '         "geometric_setback_meters": null,',
+    '         "status": "annotation_pair_found",',
+    '         "notes": "Building line and plot boundary annotations exist on the same viewport. Label-to-label distance is 37.70m. Actual setback requires geometric extraction of the corresponding line entities, which is not yet implemented. Do NOT use the label distance as a compliance measurement."',
+    '       }',
+    '',
+    '   The downstream compliance agent reads "status" and refuses to score',
+    '   `annotation_pair_found` entries as PASS/FAIL. NEVER emit a bare',
+    '   `{"side": "left", "distance_m": 3.0}` shape — that gets scored as',
+    '   if it were measured.',
+    '',
+    '5. If the SemanticIndex shows zero matches for a category that the file',
+    '   appears to need (e.g. zero rooms but the file is clearly a floor plan),',
+    '   note the gap. Do NOT try to fill it by re-running text classification —',
+    '   that\'s a vocabulary expansion problem, separate from your job.',
+    '',
+    '6. Building height: prefer `viewportsWithBoth` viewports above. On those,',
+    '   building height = max(relative_elevations) − min(relative_elevations).',
+    '   Do NOT compute height from absolute_elevation spread (those are geodetic',
+    '   readings; their range is terrain variation, not building height).',
+    '',
+    '## SELF-CHECK (do this before finalizing)',
+    '',
+    'Before returning your code, verify it does NOT contain:',
+    '  - Hebrew vocabulary patterns (`if "מטבח" in text:` etc.)',
+    '  - The substrings `"רוום"`, `"גבול"`, `"קו בניין"`, `"חדר"` in any condition',
+    '  - Regex for elevation patterns like `r"^[+-]\\d+\\.\\d+$"`',
+    '  - A LABELS dict mapping Hebrew terms (this is the OLD pattern — use the',
+    '    SemanticIndex above instead)',
+    '',
+    'If your code contains any of those, REMOVE them and rely on the',
+    'SemanticIndex categorization that\'s already been done.',
+    '',
+  );
+
+  return lines.join('\n');
 }
