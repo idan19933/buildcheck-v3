@@ -1,5 +1,5 @@
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { LogOut, LayoutGrid, Shield, Building2 } from 'lucide-react';
+import { LogOut, LayoutGrid, Shield, Building2, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../hooks/useAuth';
 import { cn } from '../lib/utils';
@@ -32,7 +32,8 @@ export default function Layout() {
 
         {/* Nav */}
         <nav className="flex-1 p-3 space-y-1">
-          <SideLink to="/" icon={<LayoutGrid className="h-4 w-4" />}>פרויקטים</SideLink>
+          <SideLink to="/" icon={<Sparkles className="h-4 w-4" />}>סוכנים</SideLink>
+          <SideLink to="/projects" icon={<LayoutGrid className="h-4 w-4" />}>פרויקטים</SideLink>
           {user?.role === 'ADMIN' && (
             <SideLink to="/admin" icon={<Shield className="h-4 w-4" />}>ניהול</SideLink>
           )}
